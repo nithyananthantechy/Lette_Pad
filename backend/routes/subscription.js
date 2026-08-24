@@ -4,6 +4,8 @@ const router  = express.Router();
 const db      = require('../config/db');
 const { authenticateToken } = require('../middleware/auth');
 const { logAction, getClientIP } = require('../services/auditService');
+const { getUserMonthlyQuota } = require('../services/quotaService');
+const { sendPaymentSubmissionNotification } = require('../services/emailService');
 
 const UPI_DETAILS = {
   upi_id: 'nithyananthannagarajan092@oksbi',
@@ -38,11 +40,11 @@ const PLANS = {
   },
 };
 
-// ── GET /api/subscription/status — Current User's Subscription & Trial Status ──
+// ── GET /api/subscription/status — Current User's Subscription, Trial & Monthly Quota Status ──
 router.get('/status', authenticateToken, async (req, res) => {
   try {
     const userRes = await db.query(
-      `SELECT id, full_name, email, role, created_at,
+      `SELECT id, full_name, email, phone, role, created_at,
               trial_ends_at, subscription_status, subscription_plan, subscription_ends_at,
               NOW() as server_now
        FROM users WHERE id = $1`,
@@ -88,6 +90,9 @@ router.get('/status', authenticateToken, async (req, res) => {
       }
     }
 
+    // Monthly Letter Quota Info
+    const quotaInfo = await getUserMonthlyQuota(req.user.id);
+
     res.json({
       success: true,
       subscription: {
@@ -98,6 +103,7 @@ router.get('/status', authenticateToken, async (req, res) => {
         trial_ends_at: u.trial_ends_at,
         subscription_ends_at: u.subscription_ends_at,
       },
+      quota: quotaInfo,
       upi: UPI_DETAILS,
       plans: PLANS,
     });
@@ -141,13 +147,15 @@ router.post('/submit-payment', authenticateToken, async (req, res) => {
 
     const requested_ends_at = new Date(Date.now() + duration_days * 24 * 60 * 60 * 1000);
 
-    // 2. Insert Payment Record with status = 'pending_approval' (Do NOT activate immediately!)
+    // 2. Insert Payment Record with status = 'pending_approval'
     const subRes = await db.query(
       `INSERT INTO subscriptions (user_id, plan_id, amount, upi_ref_no, payment_screenshot, status, starts_at, ends_at)
        VALUES ($1, $2, $3, $4, $5, 'pending_approval', NOW(), $6)
        RETURNING *`,
       [req.user.id, plan.id, amount, cleanUTR, payment_screenshot || null, requested_ends_at]
     );
+
+    const paymentRecord = subRes.rows[0];
 
     // 3. Mark User subscription_status as 'pending_approval'
     await db.query(
@@ -164,10 +172,10 @@ router.post('/submit-payment', authenticateToken, async (req, res) => {
       userId: req.user.id,
       action: 'PAYMENT_SUBMITTED',
       resourceType: 'subscription',
-      resourceId: subRes.rows[0].id,
+      resourceId: paymentRecord.id,
       ipAddress: getClientIP(req),
       details: {
-        payment_id: subRes.rows[0].id,
+        payment_id: paymentRecord.id,
         plan_id: plan.id,
         amount,
         upi_ref_no: cleanUTR,
@@ -175,10 +183,27 @@ router.post('/submit-payment', authenticateToken, async (req, res) => {
       },
     });
 
+    // 5. Asynchronously notify Super Admin via email (Failure will NOT rollback payment)
+    const userRes = await db.query('SELECT full_name, email, phone FROM users WHERE id = $1', [req.user.id]);
+    const u = userRes.rows[0] || {};
+    
+    sendPaymentSubmissionNotification({
+      paymentId: paymentRecord.id,
+      userName: u.full_name || req.user.full_name || 'Subscriber',
+      userEmail: u.email || req.user.email,
+      userPhone: u.phone,
+      planId: plan.id,
+      amount,
+      upiRefNo: cleanUTR,
+      createdAt: paymentRecord.created_at,
+    }).catch(err => {
+      console.error('[Notification Dispatch] Non-blocking email error:', err.message);
+    });
+
     res.json({
       success: true,
       message: '✅ உங்கள் கட்டணப் பதிவு பெறப்பட்டது! முதன்மை நிர்வாகியின் சரிபார்ப்பிற்குப் பிறகு (Approval) சந்தா உடனடியாக செயல்படுத்தப்படும்.',
-      subscription: subRes.rows[0],
+      subscription: paymentRecord,
     });
   } catch (err) {
     if (err.code === '23505') { // Postgres Unique Violation

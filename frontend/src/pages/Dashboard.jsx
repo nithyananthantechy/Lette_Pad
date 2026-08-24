@@ -30,6 +30,7 @@ const Dashboard = () => {
   const [letters, setLetters]   = useState([]);
   const [profiles, setProfiles] = useState([]);
   const [subInfo, setSubInfo]   = useState(null);
+  const [quotaInfo, setQuotaInfo] = useState(null);
   const [loading, setLoading]   = useState(true);
 
   useEffect(() => {
@@ -44,6 +45,7 @@ const Dashboard = () => {
         setLetters(lRes.data.letters || []);
         setProfiles(pRes.data.profiles || []);
         if (sRes.data?.subscription) setSubInfo(sRes.data.subscription);
+        if (sRes.data?.quota) setQuotaInfo(sRes.data.quota);
       } catch { toast.error(ta ? 'தரவு ஏற்றுவதில் பிழை' : 'Failed to load data'); }
       finally { setLoading(false); }
     };
@@ -138,7 +140,37 @@ const Dashboard = () => {
                     </span>
                   </Link>
                 )}
+
+                {quotaInfo && (
+                  <span className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold border
+                    ${quotaInfo.unlimited
+                      ? 'bg-purple-500/20 text-purple-300 border-purple-500/40'
+                      : quotaInfo.used >= 50
+                        ? 'bg-red-500/20 text-red-300 border-red-500/40 animate-pulse'
+                        : quotaInfo.used >= 40
+                          ? 'bg-amber-400/20 text-amber-300 border-amber-400/40'
+                          : 'bg-blue-500/20 text-blue-300 border-blue-500/40'}`}
+                  >
+                    <span>📄</span>
+                    <span>
+                      {quotaInfo.unlimited
+                        ? (ta ? 'வரம்பற்ற கடிதங்கள் (Unlimited)' : 'Unlimited Letters')
+                        : (ta ? `மாத வரம்பு: ${quotaInfo.used}/${quotaInfo.quota} (மீதம் ${quotaInfo.remaining})` : `Monthly: ${quotaInfo.used}/${quotaInfo.quota} (${quotaInfo.remaining} left)`)}
+                    </span>
+                  </span>
+                )}
               </div>
+
+              {quotaInfo && !quotaInfo.unlimited && quotaInfo.used >= 40 && (
+                <div className={`mt-2 text-xs font-bold flex items-center gap-1.5 ${quotaInfo.used >= 50 ? 'text-red-300' : 'text-amber-300'}`}>
+                  <span>⚠️</span>
+                  <span>
+                    {quotaInfo.used >= 50
+                      ? (ta ? 'இந்த மாதத்திற்கான 50 கடித வரம்பு முடிவடைந்தது. வரம்பற்ற கடிதங்களுக்கு Pro திட்டத்திற்கு மாறவும்.' : 'Monthly letter limit reached (50/50). Upgrade to Pro for unlimited letters.')
+                      : (ta ? 'மாதாந்திர கடித வரம்பு முடிய உள்ளது.' : 'Your monthly letter quota is running low.')}
+                  </span>
+                </div>
+              )}
             </div>
 
             <div className="flex flex-wrap gap-2.5">

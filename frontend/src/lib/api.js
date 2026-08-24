@@ -22,6 +22,11 @@ api.interceptors.response.use(
   async error => {
     const originalRequest = error.config;
 
+    if (error.response?.status === 429 && error.response?.data?.error === 'MONTHLY_QUOTA_EXCEEDED') {
+      toast.error(error.response?.data?.message || '⚠️ இந்த மாதத்திற்கான 50 கடித வரம்பு முடிவடைந்தது. வரம்பற்ற கடிதங்களுக்கு Pro திட்டத்திற்கு மாறவும்.');
+      return Promise.reject(error);
+    }
+
     if (error.response?.status === 402) {
       toast.error(error.response?.data?.message || '🔒 உங்கள் சோதனைக் காலம் முடிவடைந்தது. சந்தாவை புதுப்பிக்கவும்.');
       if (window.location.pathname !== '/subscription' && window.location.pathname !== '/payment') {

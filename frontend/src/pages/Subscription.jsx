@@ -163,6 +163,28 @@ const Subscription = () => {
               </div>
             </div>
           )}
+
+          {/* Monthly Letter Quota Display */}
+          {subData?.quota && (
+            <div className="mt-4 pt-4 border-t border-slate-100">
+              <div className="flex justify-between text-[11px] font-semibold text-slate-600 mb-1.5">
+                <span>{ta ? 'மாதாந்திர கடித வரம்பு (Monthly Letter Quota)' : 'Monthly Letter Quota'}</span>
+                <span>
+                  {subData.quota.unlimited
+                    ? (ta ? '👑 வரம்பற்றது (Unlimited)' : '👑 Unlimited')
+                    : `${subData.quota.used} / ${subData.quota.quota} ${ta ? 'கடிதங்கள் (மீதம் ' + subData.quota.remaining + ')' : 'letters (' + subData.quota.remaining + ' remaining)'}`}
+                </span>
+              </div>
+              {!subData.quota.unlimited && (
+                <div className="w-full bg-slate-100 rounded-full h-2 overflow-hidden">
+                  <div
+                    className={`h-full rounded-full transition-all ${subData.quota.used >= 50 ? 'bg-red-600' : subData.quota.used >= 40 ? 'bg-amber-500' : 'bg-emerald-600'}`}
+                    style={{ width: `${Math.min(100, Math.max(5, (subData.quota.used / subData.quota.quota) * 100))}%` }}
+                  />
+                </div>
+              )}
+            </div>
+          )}
         </div>
 
         {/* Pricing Cards Grid */}

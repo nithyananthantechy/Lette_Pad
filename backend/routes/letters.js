@@ -130,8 +130,45 @@ router.post('/', async (req, res) => {
     return res.status(400).json({ success: false, message: 'Profile ID required.' });
   }
 
+  const client = await db.pool.connect();
   try {
-    const profileResult = await db.query(
+    await client.query('BEGIN');
+
+    // 1. Lock user row to atomically check quota without race conditions
+    const userRes = await client.query(
+      `SELECT id, role, subscription_plan, subscription_status FROM users WHERE id = $1 FOR UPDATE`,
+      [req.user.id]
+    );
+
+    const user = userRes.rows[0] || req.user;
+    const plan = user.subscription_plan || 'starter';
+    const isSuperAdmin = user.role === 'super_admin';
+    const isStarter = !isSuperAdmin && (plan === 'starter' || plan === 'simple');
+
+    if (isStarter) {
+      // 2. Count persistent letters created in current calendar month
+      const countRes = await client.query(
+        `SELECT COUNT(*)::int as used_count 
+         FROM generated_letters 
+         WHERE generated_by = $1 AND created_at >= DATE_TRUNC('month', NOW())`,
+        [req.user.id]
+      );
+
+      const usedCount = countRes.rows[0]?.used_count || 0;
+      if (usedCount >= 50) {
+        await client.query('ROLLBACK');
+        return res.status(429).json({
+          error: 'MONTHLY_QUOTA_EXCEEDED',
+          message: 'You have reached your monthly letter limit of 50 letters. Please upgrade to Constituency Pro for unlimited letters.',
+          quota: 50,
+          used: usedCount,
+          remaining: 0,
+        });
+      }
+    }
+
+    // 3. Check profile authorization
+    const profileResult = await client.query(
       `SELECT lp.*, p.abbreviation, p.name_en, p.name_ta,
               p.primary_color, p.secondary_color, p.symbol_description
        FROM letter_profiles lp
@@ -141,6 +178,7 @@ router.post('/', async (req, res) => {
     );
 
     if (!profileResult.rows[0]) {
+      await client.query('ROLLBACK');
       return res.status(403).json({ success: false, message: 'Profile not found or access denied.' });
     }
 
@@ -152,7 +190,8 @@ router.post('/', async (req, res) => {
     const document_hash = crypto.createHash('sha256').update(content).digest('hex');
     const qr_code_data = `${process.env.FRONTEND_URL || 'http://localhost:3000'}/verify/${documentId}`;
 
-    const result = await db.query(
+    // 4. Insert persistent letter
+    const result = await client.query(
       `INSERT INTO generated_letters
          (letter_profile_id, generated_by, document_id, subject_en, subject_ta,
           body_en, body_ta, recipient_name, recipient_address,
@@ -168,6 +207,8 @@ router.post('/', async (req, res) => {
       ]
     );
 
+    await client.query('COMMIT');
+
     await logAction({
       userId: req.user.id,
       action: 'SAVE_LETTER_DRAFT',
@@ -179,8 +220,11 @@ router.post('/', async (req, res) => {
 
     res.status(201).json({ success: true, letter: result.rows[0] });
   } catch (err) {
+    await client.query('ROLLBACK');
     console.error('Save letter error:', err);
     res.status(500).json({ success: false, message: 'Failed to save letter.' });
+  } finally {
+    client.release();
   }
 });
 
