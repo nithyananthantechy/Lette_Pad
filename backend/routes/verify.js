@@ -36,11 +36,11 @@ router.get('/:documentId', async (req, res) => {
     const doc = result.rows[0];
 
     const isRevoked  = doc.status === 'revoked';
-    const isFinalized = doc.status === 'finalized';
+    const isFinalized = doc.status === 'finalized' || doc.status === 'draft';
 
     res.json({
       success: true,
-      valid: isFinalized && !isRevoked,
+      valid: !isRevoked,
       status: doc.status,
       document: {
         document_id:     doc.document_id,

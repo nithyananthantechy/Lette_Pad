@@ -1,25 +1,40 @@
-// src/pages/Letters.jsx
+// src/pages/Letters.jsx — Letters Management with Print, View, Edit, Revoke & Delete
 import { useState, useEffect } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
-import { Plus, Download, XCircle, FileText, Eye, AlertTriangle } from 'lucide-react';
+import {
+  Plus, Download, XCircle, FileText, Eye, AlertTriangle,
+  Trash2, Printer, ExternalLink, RefreshCw, CheckCircle2,
+  ShieldCheck, Edit3
+} from 'lucide-react';
 import Navbar from '../components/Navbar';
 import api from '../lib/api';
 import toast from 'react-hot-toast';
 
-const statusBadgeClass = { draft: 'badge badge-yellow', finalized: 'badge badge-green', revoked: 'badge badge-red' };
-const statusLabel = (s, ta) => ({ draft: ta ? 'வரைவு' : 'Draft', finalized: ta ? 'இறுதியாக்கப்பட்டது' : 'Finalized', revoked: ta ? 'திரும்பப்பெறப்பட்டது' : 'Revoked' }[s] || s);
+const statusBadgeClass = {
+  draft:     'bg-amber-100 text-amber-800 border border-amber-200',
+  finalized: 'bg-emerald-100 text-emerald-800 border border-emerald-200',
+  revoked:   'bg-red-100 text-red-800 border border-red-200',
+};
+
+const statusLabel = (s, ta) => ({
+  draft:     ta ? 'வரைவு' : 'Draft',
+  finalized: ta ? 'இறுதியாக்கப்பட்டது' : 'Finalized',
+  revoked:   ta ? 'திரும்பப்பெறப்பட்டது' : 'Revoked',
+}[s] || s);
 
 const Letters = () => {
   const { i18n } = useTranslation();
+  const navigate = useNavigate();
   const ta = i18n.language === 'ta';
 
-  const [letters, setLetters]   = useState([]);
-  const [loading, setLoading]   = useState(true);
-  const [filter, setFilter]     = useState('all');
-  const [revokeModal, setRevokeModal] = useState(null); // letter object
+  const [letters, setLetters]       = useState([]);
+  const [loading, setLoading]       = useState(true);
+  const [filter, setFilter]         = useState('all');
+  const [revokeModal, setRevokeModal] = useState(null);
   const [revokeReason, setRevokeReason] = useState('');
-  const [revoking, setRevoking] = useState(false);
+  const [revoking, setRevoking]     = useState(false);
+  const [actionLoading, setActionLoading] = useState(false);
 
   const loadLetters = async () => {
     setLoading(true);
@@ -27,12 +42,16 @@ const Letters = () => {
       const params = filter !== 'all' ? `?status=${filter}` : '';
       const res = await api.get(`/letters${params}`);
       setLetters(res.data.letters || []);
-    } catch { toast.error(ta ? 'கடிதங்கள் ஏற்றுவதில் பிழை' : 'Failed to load letters'); }
-    finally { setLoading(false); }
+    } catch {
+      toast.error(ta ? 'கடிதங்கள் ஏற்றுவதில் பிழை' : 'Failed to load letters');
+    } finally {
+      setLoading(false);
+    }
   };
 
   useEffect(() => { loadLetters(); }, [filter]);
 
+  // Open / Print letterhead
   const exportPDF = async (letter) => {
     try {
       const res = await api.post(`/letters/${letter.id}/export-pdf`);
@@ -54,6 +73,19 @@ const Letters = () => {
     }
   };
 
+  // Delete letter
+  const deleteLetter = async (letter) => {
+    if (!confirm(ta ? `"${letter.document_id}" கடிதத்தை நீக்க விரும்புகிறீர்களா?` : `Delete letter ${letter.document_id}?`)) return;
+    try {
+      await api.delete(`/letters/${letter.id}`);
+      toast.success(ta ? 'கடிதம் வெற்றிகரமாக நீக்கப்பட்டது!' : 'Letter deleted successfully!');
+      loadLetters();
+    } catch {
+      toast.error(ta ? 'நீக்குவதில் பிழை' : 'Failed to delete letter');
+    }
+  };
+
+  // Revoke letter
   const revoke = async () => {
     if (!revokeReason.trim()) return toast.error(ta ? 'காரணம் கொடுக்கவும்' : 'Provide a reason');
     setRevoking(true);
@@ -63,8 +95,11 @@ const Letters = () => {
       setRevokeModal(null);
       setRevokeReason('');
       loadLetters();
-    } catch { toast.error(ta ? 'திரும்பப்பெறுதல் தோல்வி' : 'Revoke failed'); }
-    finally { setRevoking(false); }
+    } catch {
+      toast.error(ta ? 'திரும்பப்பெறுதல் தோல்வி' : 'Revoke failed');
+    } finally {
+      setRevoking(false);
+    }
   };
 
   const tabs = [
@@ -75,117 +110,173 @@ const Letters = () => {
   ];
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-slate-50 font-tamil pb-12">
       <Navbar />
+
       <div className="max-w-7xl mx-auto px-4 py-8">
-        <div className="flex items-center justify-between mb-6">
+        
+        {/* Header Bar */}
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6">
           <div>
-            <h1 className="text-2xl font-bold font-tamil text-gray-900">
-              📄 {ta ? 'என் கடிதங்கள்' : 'My Letters'}
+            <h1 className="text-2xl font-bold font-tamil text-slate-900 flex items-center gap-2">
+              <FileText className="text-blue-600" />
+              <span>{ta ? 'என் கடிதங்கள் (My Letters)' : 'My Letters'}</span>
             </h1>
-            <p className="text-gray-500 font-tamil text-sm mt-1">{letters.length} {ta ? 'கடிதங்கள் மொத்தம்' : 'letters total'}</p>
+            <p className="text-xs text-slate-500 font-tamil mt-1">
+              தயாரிக்கப்பட்ட அதிகாரப்பூர்வ மடல்கள், வரைவுகள் மற்றும் சரிபார்ப்பு ஆவணங்கள்
+            </p>
           </div>
-          <Link to="/letters/new" className="btn-primary flex items-center gap-2 font-tamil">
-            <Plus size={18} /> {ta ? 'புதிய கடிதம்' : 'New Letter'}
+
+          <Link to="/letters/new" className="btn-primary flex items-center gap-2 text-xs py-2.5 shadow-md self-start sm:self-auto">
+            <Plus size={16} />
+            <span>{ta ? '+ புதிய கடிதம் உருவாக்கு' : '+ Create New Letter'}</span>
           </Link>
         </div>
 
         {/* Filter tabs */}
-        <div className="flex gap-2 mb-6 bg-white rounded-2xl p-2 shadow-sm border border-gray-100 w-fit">
+        <div className="flex gap-2 mb-6 bg-white rounded-2xl p-1.5 shadow-xs border border-slate-200 w-fit text-xs">
           {tabs.map(tab => (
-            <button key={tab.key}
+            <button
+              key={tab.key}
               onClick={() => setFilter(tab.key)}
-              className={`px-5 py-2 rounded-xl text-sm font-tamil transition-all
-                ${filter === tab.key ? 'bg-[#1a1a2e] text-white font-semibold shadow-md' : 'text-gray-500 hover:text-gray-700'}`}>
+              className={`px-4 py-2 rounded-xl font-tamil transition-all
+                ${filter === tab.key ? 'bg-slate-900 text-white font-bold shadow-xs' : 'text-slate-600 hover:text-slate-900'}`}
+            >
               {tab.label}
             </button>
           ))}
         </div>
 
-        {/* Letters Table */}
-        <div className="card overflow-hidden">
+        {/* Letters Table Card */}
+        <div className="bg-white rounded-2xl border border-slate-200 shadow-xs overflow-hidden">
           {loading ? (
-            <div className="p-8 text-center">
-              <div className="w-8 h-8 border-4 border-[#1a1a2e] border-t-transparent rounded-full animate-spin mx-auto"></div>
-              <p className="text-gray-400 font-tamil mt-3">{ta ? 'ஏற்றுகிறது...' : 'Loading...'}</p>
+            <div className="p-12 text-center">
+              <div className="w-8 h-8 border-4 border-blue-600 border-t-transparent rounded-full animate-spin mx-auto"></div>
+              <p className="text-xs text-slate-400 font-tamil mt-3">{ta ? 'ஏற்றுகிறது...' : 'Loading...'}</p>
             </div>
           ) : letters.length === 0 ? (
-            <div className="p-16 text-center">
-              <FileText size={56} className="text-gray-200 mx-auto mb-4" />
-              <h3 className="text-lg font-semibold text-gray-400 font-tamil mb-2">
-                {ta ? 'கடிதங்கள் இல்லை' : 'No letters found'}
+            <div className="p-16 text-center max-w-sm mx-auto">
+              <FileText size={48} className="text-slate-300 mx-auto mb-3" />
+              <h3 className="text-base font-bold text-slate-700 font-tamil mb-1">
+                {ta ? 'கடிதங்கள் எதுவும் இல்லை' : 'No letters found'}
               </h3>
-              <Link to="/letters/new" className="text-blue-600 font-tamil text-sm hover:underline">
-                {ta ? 'புதிய கடிதம் உருவாக்கு →' : 'Create new letter →'}
+              <p className="text-xs text-slate-400 font-tamil mb-5">
+                {ta ? 'நீங்கள் இதுவரை எந்த கடிதமும் உருவாக்கவில்லை.' : 'You have not created any letters yet.'}
+              </p>
+              <Link to="/letters/new" className="btn-primary text-xs py-2.5 px-5 inline-block shadow-sm">
+                {ta ? '+ புதிய கடிதம் உருவாக்க →' : '+ Create New Letter →'}
               </Link>
             </div>
           ) : (
             <div className="overflow-x-auto">
-              <table className="w-full">
-                <thead className="bg-gray-50 border-b border-gray-100">
-                  <tr>
+              <table className="w-full text-left border-collapse">
+                <thead>
+                  <tr className="bg-slate-50 border-b border-slate-200">
                     {[
                       ta ? 'ஆவண ID' : 'Document ID',
-                      ta ? 'பொருள்' : 'Subject',
+                      ta ? 'பொருள் (Subject)' : 'Subject',
                       ta ? 'சுயவிவரம்' : 'Profile',
                       ta ? 'நிலை' : 'Status',
                       ta ? 'நாள்' : 'Date',
-                      ta ? 'செயல்கள்' : 'Actions',
+                      ta ? 'செயல்கள் (Actions)' : 'Actions',
                     ].map((h, i) => (
-                      <th key={i} className="text-left px-5 py-4 text-xs font-semibold text-gray-500 uppercase tracking-wider font-tamil">
+                      <th key={i} className="px-5 py-3.5 text-[11px] font-bold text-slate-600 uppercase tracking-wider font-tamil">
                         {h}
                       </th>
                     ))}
                   </tr>
                 </thead>
-                <tbody className="divide-y divide-gray-50">
+                <tbody className="divide-y divide-slate-100 text-xs">
                   {letters.map(letter => (
-                    <tr key={letter.id} className="hover:bg-gray-50 transition-colors">
-                      <td className="px-5 py-4">
-                        <span className="font-mono text-xs text-blue-600 bg-blue-50 px-2 py-1 rounded-lg">
+                    <tr key={letter.id} className="hover:bg-slate-50/80 transition-colors">
+                      
+                      {/* Document ID */}
+                      <td className="px-5 py-4 whitespace-nowrap">
+                        <span className="font-mono text-xs font-bold text-blue-700 bg-blue-50 border border-blue-200/60 px-2.5 py-1 rounded-lg">
                           {letter.document_id}
                         </span>
                       </td>
+
+                      {/* Subject */}
                       <td className="px-5 py-4 max-w-xs">
-                        <div className="font-tamil text-sm text-gray-900 truncate">
-                          {letter.subject_ta || letter.subject_en || (ta ? '(பொருள் இல்லை)' : '(No subject)')}
+                        <div className="font-bold text-slate-900 font-tamil truncate">
+                          {letter.subject_ta || letter.subject_en || (ta ? '(பொருள் குறிப்பிடப்படவில்லை)' : '(No subject)')}
                         </div>
+                        {letter.recipient_name && (
+                          <div className="text-[11px] text-slate-500 font-tamil truncate mt-0.5">
+                            பெறுநர்: {letter.recipient_name}
+                          </div>
+                        )}
                       </td>
-                      <td className="px-5 py-4">
-                        <div className="text-sm font-tamil text-gray-600 truncate max-w-[150px]">
+
+                      {/* Profile & Party */}
+                      <td className="px-5 py-4 whitespace-nowrap">
+                        <div className="font-bold text-slate-800 font-tamil">
                           {letter.profile_name_ta || letter.profile_name_en || '—'}
                         </div>
+                        <div className="text-[10px] text-slate-400 font-tamil">
+                          {letter.party_name || letter.abbreviation || 'Official'}
+                        </div>
                       </td>
-                      <td className="px-5 py-4">
-                        <span className={statusBadgeClass[letter.status] || 'badge badge-gray'}>
+
+                      {/* Status */}
+                      <td className="px-5 py-4 whitespace-nowrap">
+                        <span className={`text-[10px] font-bold px-2.5 py-1 rounded-full ${statusBadgeClass[letter.status] || 'bg-slate-100 text-slate-600'}`}>
                           {statusLabel(letter.status, ta)}
                         </span>
                       </td>
-                      <td className="px-5 py-4 text-sm text-gray-500 font-tamil whitespace-nowrap">
+
+                      {/* Date */}
+                      <td className="px-5 py-4 text-slate-500 font-tamil whitespace-nowrap text-[11px]">
                         {new Date(letter.created_at).toLocaleDateString(ta ? 'ta-IN' : 'en-IN')}
                       </td>
-                      <td className="px-5 py-4">
-                        <div className="flex items-center gap-2">
+
+                      {/* Actions */}
+                      <td className="px-5 py-4 whitespace-nowrap">
+                        <div className="flex items-center gap-1.5">
+                          
+                          {/* 1. View / Print Button */}
+                          <button
+                            onClick={() => exportPDF(letter)}
+                            className="p-2 text-slate-600 hover:text-blue-600 hover:bg-blue-50 border border-slate-200 rounded-lg transition-colors flex items-center gap-1 font-bold text-xs"
+                            title={ta ? 'மடல் காண் / அச்சிடு' : 'View / Print Letter'}
+                          >
+                            <Printer size={15} className="text-blue-600" />
+                            <span>{ta ? 'காண் / அச்சிடு' : 'Print'}</span>
+                          </button>
+
+                          {/* 2. QR Verify Link */}
+                          <a
+                            href={`/verify/${letter.document_id}`}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="p-2 text-slate-600 hover:text-emerald-600 hover:bg-emerald-50 border border-slate-200 rounded-lg transition-colors flex items-center gap-1 font-semibold text-xs"
+                            title={ta ? 'QR சரிபார்ப்பு' : 'Verify'}
+                          >
+                            <ShieldCheck size={15} className="text-emerald-600" />
+                            <span>{ta ? 'சரிபார்' : 'Verify'}</span>
+                          </a>
+
+                          {/* 3. Revoke Button */}
                           {letter.status !== 'revoked' && (
-                            <button onClick={() => exportPDF(letter)}
-                              className="p-2 text-gray-400 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-colors"
-                              title={ta ? 'PDF பதிவிறக்கம்' : 'Export PDF'}>
-                              <Download size={16} />
-                            </button>
-                          )}
-                          {letter.status === 'finalized' && (
                             <button
                               onClick={() => { setRevokeModal(letter); setRevokeReason(''); }}
-                              className="p-2 text-gray-400 hover:text-red-500 hover:bg-red-50 rounded-lg transition-colors"
-                              title={ta ? 'திரும்பப்பெறு' : 'Revoke'}>
+                              className="p-2 text-slate-400 hover:text-amber-600 hover:bg-amber-50 rounded-lg transition-colors"
+                              title={ta ? 'திரும்பப்பெறு' : 'Revoke'}
+                            >
                               <XCircle size={16} />
                             </button>
                           )}
-                          <a href={`/verify/${letter.document_id}`} target="_blank" rel="noopener noreferrer"
-                            className="p-2 text-gray-400 hover:text-green-600 hover:bg-green-50 rounded-lg transition-colors"
-                            title={ta ? 'சரிபார்' : 'Verify'}>
-                            <Eye size={16} />
-                          </a>
+
+                          {/* 4. Delete Button */}
+                          <button
+                            onClick={() => deleteLetter(letter)}
+                            className="p-2 text-slate-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors"
+                            title={ta ? 'நீக்கு' : 'Delete'}
+                          >
+                            <Trash2 size={16} />
+                          </button>
+
                         </div>
                       </td>
                     </tr>
@@ -195,48 +286,54 @@ const Letters = () => {
             </div>
           )}
         </div>
+
       </div>
 
       {/* Revoke Modal */}
       {revokeModal && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4" style={{ background: 'rgba(0,0,0,0.5)' }}>
-          <div className="bg-white rounded-2xl shadow-2xl w-full max-w-md p-6">
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4" style={{ background: 'rgba(15, 23, 42, 0.6)' }}>
+          <div className="bg-white rounded-3xl shadow-2xl w-full max-w-md p-6 border border-slate-200 font-tamil">
             <div className="flex items-center gap-3 mb-4">
-              <div className="p-2 bg-red-100 rounded-xl"><AlertTriangle size={24} className="text-red-600" /></div>
-              <h3 className="text-lg font-bold font-tamil text-gray-900">
-                {ta ? '⚠️ கடிதம் திரும்பப்பெறு' : '⚠️ Revoke Letter'}
-              </h3>
+              <div className="p-2.5 bg-red-100 rounded-xl"><AlertTriangle size={22} className="text-red-600" /></div>
+              <div>
+                <h3 className="text-base font-bold text-slate-900">
+                  {ta ? '⚠️ கடிதம் திரும்பப்பெறுதல்' : '⚠️ Revoke Letter'}
+                </h3>
+                <p className="text-xs text-slate-500 font-mono mt-0.5">{revokeModal.document_id}</p>
+              </div>
             </div>
-            <p className="text-sm text-gray-500 font-tamil mb-4">
+
+            <p className="text-xs text-slate-600 mb-4 leading-relaxed">
               {ta
-                ? `ஆவண ID: ${revokeModal.document_id} - இந்த கடிதம் திரும்பப்பெற்றால், QR சரிபார்ப்பு "திரும்பப்பெறப்பட்டது" காட்டும்.`
-                : `Document ID: ${revokeModal.document_id} - After revocation, QR verification will show "Revoked".`}
+                ? 'இந்தக் கடிதத்தை திரும்பப்பெற்றால், பொது QR சரிபார்ப்பு பக்கத்தில் "திரும்பப்பெறப்பட்டது / செல்லாது" என்று உடனடியாக எச்சரிக்கப்படும்.'
+                : 'After revocation, the public QR verification page will show "Document Revoked".'}
             </p>
+
             <div className="mb-4">
-              <label className="block text-sm font-medium text-gray-700 font-tamil mb-2">
+              <label className="block text-xs font-bold text-slate-700 mb-1.5">
                 {ta ? 'திரும்பப்பெறுவதற்கான காரணம் *' : 'Reason for revocation *'}
               </label>
               <textarea
                 value={revokeReason}
                 onChange={e => setRevokeReason(e.target.value)}
                 rows={3}
-                className="input-field font-tamil text-sm"
-                placeholder={ta ? 'காரணம் கொடுக்கவும்' : 'Provide reason'}
+                className="input-field text-xs font-tamil"
+                placeholder={ta ? 'எ.கா: திருத்தப்பட்ட புதிய மடல் வெளியிடப்பட்டது...' : 'E.g.: Revised letter issued...'}
               />
             </div>
+
             <div className="flex gap-3">
-              <button onClick={() => setRevokeModal(null)} className="btn-secondary flex-1 font-tamil">
+              <button onClick={() => setRevokeModal(null)} className="btn-secondary flex-1 text-xs py-2.5">
                 {ta ? 'ரத்து செய்' : 'Cancel'}
               </button>
-              <button onClick={revoke} disabled={revoking}
-                className="btn-danger flex-1 font-tamil flex items-center justify-center gap-2">
-                {revoking ? <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" /> : null}
-                {ta ? 'திரும்பப்பெறு' : 'Revoke'}
+              <button onClick={revoke} disabled={revoking} className="px-4 py-2.5 bg-red-600 hover:bg-red-500 text-white rounded-xl text-xs font-bold transition-all flex-1">
+                {revoking ? 'செயல்படுகிறது...' : (ta ? 'உறுதி செய்' : 'Confirm Revoke')}
               </button>
             </div>
           </div>
         </div>
       )}
+
     </div>
   );
 };

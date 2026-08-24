@@ -332,9 +332,33 @@ router.post('/:id/revoke', async (req, res) => {
       details: { documentId: result.rows[0].document_id, reason },
     });
 
-    res.json({ success: true, message: 'Letter revoked. The document is no longer valid.' });
+// ── DELETE /api/letters/:id ────────────────────────────────────
+router.delete('/:id', async (req, res) => {
+  try {
+    const result = await db.query(
+      `DELETE FROM generated_letters 
+       WHERE id = $1 AND generated_by = $2 
+       RETURNING id, document_id`,
+      [req.params.id, req.user.id]
+    );
+
+    if (!result.rows[0]) {
+      return res.status(404).json({ success: false, message: 'Letter not found or access denied.' });
+    }
+
+    await logAction({
+      userId: req.user.id,
+      action: 'DELETE_LETTER',
+      resourceType: 'letter',
+      resourceId: req.params.id,
+      ipAddress: getClientIP(req),
+      details: { documentId: result.rows[0].document_id },
+    });
+
+    res.json({ success: true, message: 'Letter deleted successfully.' });
   } catch (err) {
-    res.status(500).json({ success: false, message: 'Failed to revoke letter.' });
+    console.error('Delete letter error:', err);
+    res.status(500).json({ success: false, message: 'Failed to delete letter.' });
   }
 });
 
