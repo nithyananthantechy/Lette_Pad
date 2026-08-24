@@ -332,6 +332,12 @@ router.post('/:id/revoke', async (req, res) => {
       details: { documentId: result.rows[0].document_id, reason },
     });
 
+    res.json({ success: true, message: 'Letter revoked. The document is no longer valid.' });
+  } catch (err) {
+    res.status(500).json({ success: false, message: 'Failed to revoke letter.' });
+  }
+});
+
 // ── DELETE /api/letters/:id ────────────────────────────────────
 router.delete('/:id', async (req, res) => {
   try {
