@@ -1,0 +1,102 @@
+{
+  "app": {
+    "name": "AI Letter Pad",
+    "tagline": "Tamil Nadu Political & Government Officials Letter Platform"
+  },
+  "nav": {
+    "home": "Home",
+    "dashboard": "Dashboard",
+    "letters": "Letters",
+    "profiles": "Profiles",
+    "audit": "Audit Log",
+    "logout": "Logout",
+    "login": "Login",
+    "register": "Register"
+  },
+  "landing": {
+    "hero_title": "AI-Powered Letter Pad for Tamil Nadu",
+    "hero_subtitle": "Professional letterhead generation for political parties and government officials",
+    "get_started": "Get Started",
+    "learn_more": "Learn More",
+    "features_title": "Key Features",
+    "feature_ai": "AI Letter Drafting",
+    "feature_ai_desc": "Draft letters in Tamil & English with Gemini AI assistance",
+    "feature_secure": "Secure QR Verification",
+    "feature_secure_desc": "Every letter has a QR code and unique Document ID for authenticity",
+    "feature_audit": "Audit Trail",
+    "feature_audit_desc": "All actions are securely logged for compliance",
+    "stats_parties": "Political Parties",
+    "stats_officials": "Government Officials",
+    "stats_letters": "Letters Generated"
+  },
+  "auth": {
+    "login_title": "Sign In",
+    "register_title": "Create Account",
+    "email": "Email",
+    "password": "Password",
+    "full_name": "Full Name",
+    "phone": "Phone Number",
+    "role": "Role",
+    "otp": "OTP Code",
+    "verify": "Verify",
+    "submit": "Submit",
+    "forgot_password": "Forgot Password?",
+    "already_account": "Already have an account?",
+    "no_account": "Don't have an account?"
+  },
+  "dashboard": {
+    "welcome": "Welcome",
+    "my_profiles": "My Profiles",
+    "recent_letters": "Recent Letters",
+    "create_letter": "Create Letter",
+    "create_profile": "Create Profile",
+    "total_letters": "Total Letters",
+    "draft": "Draft",
+    "finalized": "Finalized",
+    "revoked": "Revoked"
+  },
+  "letter": {
+    "subject": "Subject",
+    "body": "Letter Body",
+    "recipient": "Recipient",
+    "language": "Language",
+    "generate_ai": "Generate with AI",
+    "improve_ai": "Improve with AI",
+    "translate": "Translate",
+    "export_pdf": "Export PDF",
+    "revoke": "Revoke",
+    "preview": "Preview",
+    "save_draft": "Save Draft",
+    "finalize": "Finalize"
+  },
+  "profile": {
+    "party_profile": "Party Profile",
+    "govt_profile": "Government Profile",
+    "designation": "Designation",
+    "constituency": "Constituency",
+    "party": "Party",
+    "address": "Address",
+    "layout": "Layout"
+  },
+  "verify": {
+    "title": "Document Verification",
+    "authentic": "✅ This document is AUTHENTIC and verified",
+    "revoked": "⚠️ This document has been REVOKED",
+    "not_found": "❌ Document not found",
+    "issued_by": "Issued By",
+    "document_id": "Document ID"
+  },
+  "common": {
+    "loading": "Loading...",
+    "save": "Save",
+    "cancel": "Cancel",
+    "delete": "Delete",
+    "edit": "Edit",
+    "back": "Back",
+    "next": "Next",
+    "success": "Success!",
+    "error": "Error",
+    "tamil": "தமிழ்",
+    "english": "English"
+  }
+}

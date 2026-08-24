@@ -1,0 +1,102 @@
+{
+  "app": {
+    "name": "AI Letter Pad",
+    "tagline": "தமிழ்நாடு அரசியல் & அரசு அலுவலர் மடல் தளம்"
+  },
+  "nav": {
+    "home": "முகப்பு",
+    "dashboard": "டாஷ்போர்டு",
+    "letters": "கடிதங்கள்",
+    "profiles": "சுயவிவரங்கள்",
+    "audit": "தணிக்கை பதிவு",
+    "logout": "வெளியேறு",
+    "login": "உள்நுழைவு",
+    "register": "பதிவு"
+  },
+  "landing": {
+    "hero_title": "தமிழ்நாட்டிற்கான AI மடல் தளம்",
+    "hero_subtitle": "அரசியல் கட்சிகள் மற்றும் அரசு அலுவலர்களுக்கான தொழில்முறை மடல் தலைப்பு தயாரிப்பு",
+    "get_started": "தொடங்குக",
+    "learn_more": "மேலும் அறிக",
+    "features_title": "முக்கிய அம்சங்கள்",
+    "feature_ai": "AI கடிதம் வரைவு",
+    "feature_ai_desc": "Gemini AI மூலம் தமிழ் & ஆங்கிலத்தில் கடிதங்கள் தயாரிக்கவும்",
+    "feature_secure": "பாதுகாப்பான QR சரிபார்ப்பு",
+    "feature_secure_desc": "ஒவ்வொரு கடிதமும் QR குறியீடு மற்றும் தனிப்பட்ட ஆவண ID கொண்டது",
+    "feature_audit": "தணிக்கை பதிவு",
+    "feature_audit_desc": "அனைத்து செயல்களும் பாதுகாப்பாக பதிவு செய்யப்படுகின்றன",
+    "stats_parties": "அரசியல் கட்சிகள்",
+    "stats_officials": "அரசு அலுவலர்கள்",
+    "stats_letters": "உருவாக்கப்பட்ட கடிதங்கள்"
+  },
+  "auth": {
+    "login_title": "உள்நுழைவு",
+    "register_title": "புதிய கணக்கு",
+    "email": "மின்னஞ்சல்",
+    "password": "கடவுச்சொல்",
+    "full_name": "முழு பெயர்",
+    "phone": "தொலைபேசி எண்",
+    "role": "பாத்திரம்",
+    "otp": "OTP குறியீடு",
+    "verify": "சரிபார்க்க",
+    "submit": "சமர்ப்பிக்க",
+    "forgot_password": "கடவுச்சொல் மறந்துவிட்டதா?",
+    "already_account": "கணக்கு இருக்கிறதா?",
+    "no_account": "கணக்கு இல்லையா?"
+  },
+  "dashboard": {
+    "welcome": "வரவேற்கிறோம்",
+    "my_profiles": "என் சுயவிவரங்கள்",
+    "recent_letters": "சமீபத்திய கடிதங்கள்",
+    "create_letter": "கடிதம் உருவாக்கு",
+    "create_profile": "சுயவிவரம் உருவாக்கு",
+    "total_letters": "மொத்த கடிதங்கள்",
+    "draft": "வரைவு",
+    "finalized": "இறுதியாக்கப்பட்டது",
+    "revoked": "திரும்பப்பெறப்பட்டது"
+  },
+  "letter": {
+    "subject": "பொருள்",
+    "body": "உள்ளடக்கம்",
+    "recipient": "பெறுநர்",
+    "language": "மொழி",
+    "generate_ai": "AI மூலம் தயாரிக்க",
+    "improve_ai": "AI மூலம் மேம்படுத்த",
+    "translate": "மொழிபெயர்க்க",
+    "export_pdf": "PDF ஏற்றுமதி",
+    "revoke": "திரும்பப்பெறு",
+    "preview": "முன்னோட்டம்",
+    "save_draft": "வரைவாக சேமிக்க",
+    "finalize": "இறுதியாக்கு"
+  },
+  "profile": {
+    "party_profile": "கட்சி சுயவிவரம்",
+    "govt_profile": "அரசு சுயவிவரம்",
+    "designation": "பதவி",
+    "constituency": "தொகுதி",
+    "party": "கட்சி",
+    "address": "முகவரி",
+    "layout": "வடிவமைப்பு"
+  },
+  "verify": {
+    "title": "ஆவண சரிபார்ப்பு",
+    "authentic": "✅ இந்த ஆவணம் உண்மையானது மற்றும் சரிபார்க்கப்பட்டது",
+    "revoked": "⚠️ இந்த ஆவணம் திரும்பப்பெறப்பட்டது",
+    "not_found": "❌ ஆவணம் கண்டுபிடிக்கப்படவில்லை",
+    "issued_by": "வழங்கியவர்",
+    "document_id": "ஆவண ID"
+  },
+  "common": {
+    "loading": "ஏற்றுகிறது...",
+    "save": "சேமிக்க",
+    "cancel": "ரத்து செய்",
+    "delete": "நீக்கு",
+    "edit": "திருத்து",
+    "back": "திரும்பு",
+    "next": "அடுத்து",
+    "success": "வெற்றி!",
+    "error": "பிழை",
+    "tamil": "தமிழ்",
+    "english": "English"
+  }
+}
