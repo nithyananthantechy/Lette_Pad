@@ -53,9 +53,10 @@ const Profiles = () => {
   const [parties, setParties]     = useState([]);
   const [loading, setLoading]     = useState(true);
   const [showModal, setShowModal] = useState(false);
+  const [editingId, setEditingId] = useState(null);
   const [formLoading, setFormLoading] = useState(false);
 
-  const [form, setForm] = useState({
+  const initialForm = {
     profile_type: 'party_profile',
     party_id: '',
     party_role: 'மாவட்ட கழகச் செயலாளர்',
@@ -71,7 +72,37 @@ const Profiles = () => {
     email: '',
     website: '',
     layout_style: 'classic',
-  });
+  };
+
+  const [form, setForm] = useState(initialForm);
+
+  const handleOpenCreate = () => {
+    setEditingId(null);
+    setForm(initialForm);
+    setShowModal(true);
+  };
+
+  const handleOpenEdit = (profile) => {
+    setEditingId(profile.id);
+    setForm({
+      profile_type: profile.profile_type || 'party_profile',
+      party_id: profile.party_id || '',
+      party_role: profile.party_role || profile.designation_ta || '',
+      govt_dept: profile.department_id || 'mla_mp',
+      profile_name_en: profile.profile_name_en || '',
+      profile_name_ta: profile.profile_name_ta || '',
+      designation_en: profile.designation_en || '',
+      designation_ta: profile.designation_ta || '',
+      constituency: profile.constituency || 'ஈரோடு கிழக்கு (Erode East)',
+      address_en: profile.address_en || '',
+      address_ta: profile.address_ta || '',
+      phone: profile.phone || '',
+      email: profile.email || '',
+      website: profile.website || '',
+      layout_style: profile.layout_style || 'classic',
+    });
+    setShowModal(true);
+  };
 
   const loadData = async () => {
     try {
@@ -137,12 +168,18 @@ const Profiles = () => {
     }
     setFormLoading(true);
     try {
-      await api.post('/profiles', form);
-      toast.success(ta ? '✅ புதிய மடல் சுயவிவரம் உருவாக்கப்பட்டது!' : '✅ Letterhead profile created!');
+      if (editingId) {
+        await api.put(`/profiles/${editingId}`, form);
+        toast.success(ta ? '✅ சுயவிவரம் வெற்றிகரமாக புதுப்பிக்கப்பட்டது!' : '✅ Letterhead profile updated!');
+      } else {
+        await api.post('/profiles', form);
+        toast.success(ta ? '✅ புதிய மடல் சுயவிவரம் உருவாக்கப்பட்டது!' : '✅ Letterhead profile created!');
+      }
       setShowModal(false);
+      setEditingId(null);
       loadData();
     } catch (err) {
-      toast.error(err.response?.data?.message || (ta ? 'உருவாக்கம் தோல்வி' : 'Creation failed'));
+      toast.error(err.response?.data?.message || (ta ? 'செயல்பாடு தோல்வி' : 'Operation failed'));
     } finally {
       setFormLoading(false);
     }
@@ -160,7 +197,7 @@ const Profiles = () => {
   };
 
   return (
-    <div className="min-h-screen bg-slate-50 font-tamil">
+    <div className="min-h-screen bg-slate-50 font-tamil pb-16">
       <Navbar />
       
       <div className="max-w-7xl mx-auto px-4 py-8">
@@ -178,7 +215,7 @@ const Profiles = () => {
           </div>
 
           <button
-            onClick={() => setShowModal(true)}
+            onClick={handleOpenCreate}
             className="btn-primary flex items-center gap-2 text-xs py-2.5 shadow-md self-start sm:self-auto"
           >
             <Plus size={16} />
@@ -214,7 +251,7 @@ const Profiles = () => {
             <p className="text-xs text-slate-500 font-tamil mb-6">
               முதலில் உங்கள் அரசியல் கட்சி அல்லது அரசு அலுவலகத்திற்கான மடல் சுயவிவரத்தை உருவாக்குங்கள்.
             </p>
-            <button onClick={() => setShowModal(true)} className="btn-primary text-xs py-3 px-6 shadow-md">
+            <button onClick={handleOpenCreate} className="btn-primary text-xs py-3 px-6 shadow-md">
               + முதல் சுயவிவரத்தை உருவாக்கவும்
             </button>
           </div>
@@ -258,18 +295,31 @@ const Profiles = () => {
                   <span className="bg-slate-100 text-slate-700 px-2.5 py-1 rounded-lg text-[11px] font-semibold">
                     {LAYOUT_OPTIONS.find(l => l.id === profile.layout_style)?.name_ta || profile.layout_style}
                   </span>
-                  <button onClick={() => deactivate(profile.id)}
-                    className="p-1.5 text-slate-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors"
-                    title={ta ? 'முடக்கு / நீக்கு' : 'Deactivate'}>
-                    <Trash2 size={15} />
-                  </button>
+                  
+                  <div className="flex items-center gap-1.5">
+                    <button
+                      onClick={() => handleOpenEdit(profile)}
+                      className="p-1.5 text-slate-600 hover:text-blue-600 hover:bg-blue-50 border border-slate-200 rounded-lg transition-colors flex items-center gap-1 font-bold text-xs"
+                      title={ta ? 'சுயவிவரம் திருத்து' : 'Edit Profile'}
+                    >
+                      <Edit3 size={13} className="text-blue-600" />
+                      <span>{ta ? 'திருத்து' : 'Edit'}</span>
+                    </button>
+                    <button
+                      onClick={() => deactivate(profile.id)}
+                      className="p-1.5 text-slate-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors"
+                      title={ta ? 'முடக்கு / நீக்கு' : 'Deactivate'}
+                    >
+                      <Trash2 size={14} />
+                    </button>
+                  </div>
                 </div>
               </div>
             ))}
           </div>
         )}
 
-        {/* CREATE MODAL — DYNAMIC PARTY VS GOVERNMENT FORM */}
+        {/* CREATE / EDIT MODAL — DYNAMIC PARTY VS GOVERNMENT FORM */}
         {showModal && (
           <div className="fixed inset-0 z-50 flex items-center justify-center p-4" style={{ background: 'rgba(15, 23, 42, 0.6)' }}>
             <div className="bg-white rounded-3xl shadow-2xl w-full max-w-2xl max-h-[90vh] overflow-y-auto border border-slate-200">
@@ -279,9 +329,11 @@ const Profiles = () => {
                 <div>
                   <h2 className="text-base font-bold font-tamil flex items-center gap-2">
                     <Sparkles size={18} className="text-amber-400" />
-                    {form.profile_type === 'govt_profile'
-                      ? '🏛️ தமிழ்நாடு அரசு / சட்டமன்ற மடல் சுயவிவரம்'
-                      : '🏳️ அரசியல் கட்சி மடல் சுயவிவரம் உருவாக்குதல்'}
+                    {editingId
+                      ? (ta ? '✏️ மடல் சுயவிவரம் திருத்துதல்' : '✏️ Edit Letterhead Profile')
+                      : (form.profile_type === 'govt_profile'
+                          ? '🏛️ தமிழ்நாடு அரசு / சட்டமன்ற மடல் சுயவிவரம்'
+                          : '🏳️ அரசியல் கட்சி மடல் சுயவிவரம் உருவாக்குதல்')}
                   </h2>
                   <p className="text-xs text-indigo-300 font-tamil mt-0.5">
                     {form.profile_type === 'govt_profile'

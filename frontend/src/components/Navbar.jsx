@@ -140,20 +140,28 @@ const Navbar = () => {
             {user ? (
               <div className="flex items-center gap-2 pl-2 border-l border-slate-800">
                 
-                {/* User Info Capsule */}
-                <div className="flex items-center gap-2.5 bg-slate-900/90 border border-slate-800 px-3 py-1.5 rounded-xl">
-                  <div className="w-7 h-7 rounded-lg bg-gradient-to-tr from-blue-600 to-indigo-600 text-white font-bold text-xs flex items-center justify-center shadow-xs flex-shrink-0">
-                    {user.full_name ? user.full_name.charAt(0).toUpperCase() : 'U'}
+                {/* User Info Capsule — Links to /settings */}
+                <Link
+                  to="/settings"
+                  className="flex items-center gap-2.5 bg-slate-900/90 hover:bg-slate-800 border border-slate-800 hover:border-slate-700 px-3 py-1.5 rounded-xl transition-all group"
+                  title={lang === 'ta' ? 'கணக்கு அமைப்புகள் (Settings)' : 'Account Settings'}
+                >
+                  <div className="w-7 h-7 rounded-lg overflow-hidden bg-gradient-to-tr from-blue-600 to-indigo-600 text-white font-bold text-xs flex items-center justify-center shadow-xs flex-shrink-0">
+                    {user.avatar_url ? (
+                      <img src={user.avatar_url} alt="Avatar" className="w-full h-full object-cover" />
+                    ) : (
+                      user.full_name ? user.full_name.charAt(0).toUpperCase() : 'U'
+                    )}
                   </div>
                   <div className="text-left">
-                    <div className="text-xs font-bold text-white font-tamil whitespace-nowrap leading-tight">
+                    <div className="text-xs font-bold text-white group-hover:text-blue-300 font-tamil whitespace-nowrap leading-tight transition-colors">
                       {user.full_name}
                     </div>
                     <div className="text-[10px] text-blue-400 font-tamil leading-tight">
                       {user.role === 'party_admin' ? 'கழக நிர்வாகி' : user.role === 'govt_official' ? 'அரசு அலுவலர்' : 'உறுப்பினர்'}
                     </div>
                   </div>
-                </div>
+                </Link>
 
                 {/* Logout Button */}
                 <button

@@ -350,7 +350,92 @@ router.post('/reset-password', [
 
 // ── GET /api/auth/me ──────────────────────────────────────────
 router.get('/me', authenticateToken, async (req, res) => {
-  res.json({ success: true, user: req.user });
+  try {
+    const result = await db.query(
+      `SELECT id, full_name, email, phone, role, is_verified, avatar_url, created_at
+       FROM users WHERE id = $1`,
+      [req.user.id]
+    );
+    if (!result.rows[0]) {
+      return res.status(404).json({ success: false, message: 'User not found' });
+    }
+    res.json({ success: true, user: result.rows[0] });
+  } catch (err) {
+    res.status(500).json({ success: false, message: 'Failed to fetch user' });
+  }
+});
+
+// ── PUT /api/auth/profile — Update user full name, phone & avatar ──
+router.put('/profile', authenticateToken, async (req, res) => {
+  const { full_name, phone, avatar_url } = req.body;
+
+  if (!full_name) {
+    return res.status(400).json({ success: false, message: 'Full name is required' });
+  }
+
+  try {
+    const result = await db.query(
+      `UPDATE users
+       SET full_name = $1,
+           phone = COALESCE($2, phone),
+           avatar_url = COALESCE($3, avatar_url),
+           updated_at = NOW()
+       WHERE id = $4
+       RETURNING id, full_name, email, phone, role, is_verified, avatar_url, created_at`,
+      [full_name, phone || null, avatar_url || null, req.user.id]
+    );
+
+    await logAction({
+      userId: req.user.id,
+      action: 'UPDATE_USER_PROFILE',
+      ipAddress: getClientIP(req),
+      details: { full_name, phone },
+    });
+
+    res.json({ success: true, user: result.rows[0], message: 'Profile updated successfully!' });
+  } catch (err) {
+    console.error('Update profile error:', err);
+    res.status(500).json({ success: false, message: 'Failed to update profile' });
+  }
+});
+
+// ── POST /api/auth/change-password — Change password ───────────
+router.post('/change-password', authenticateToken, async (req, res) => {
+  const { currentPassword, newPassword } = req.body;
+
+  if (!currentPassword || !newPassword) {
+    return res.status(400).json({ success: false, message: 'Current password and new password are required' });
+  }
+
+  if (newPassword.length < 8) {
+    return res.status(400).json({ success: false, message: 'New password must be at least 8 characters' });
+  }
+
+  try {
+    const userResult = await db.query('SELECT password_hash FROM users WHERE id = $1', [req.user.id]);
+    if (!userResult.rows[0]) {
+      return res.status(404).json({ success: false, message: 'User not found' });
+    }
+
+    const isMatch = await bcrypt.compare(currentPassword, userResult.rows[0].password_hash);
+    if (!isMatch) {
+      return res.status(400).json({ success: false, message: 'தற்போதைய கடவுச்சொல் தவறானது (Current password incorrect)' });
+    }
+
+    const newHash = await bcrypt.hash(newPassword, 12);
+    await db.query('UPDATE users SET password_hash = $1, updated_at = NOW() WHERE id = $2', [newHash, req.user.id]);
+
+    await logAction({
+      userId: req.user.id,
+      action: 'CHANGE_PASSWORD',
+      ipAddress: getClientIP(req),
+    });
+
+    res.json({ success: true, message: 'கடவுச்சொல் வெற்றிகரமாக மாற்றப்பட்டது! (Password changed successfully)' });
+  } catch (err) {
+    console.error('Change password error:', err);
+    res.status(500).json({ success: false, message: 'Failed to change password' });
+  }
 });
 
 module.exports = router;

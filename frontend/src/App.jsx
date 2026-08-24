@@ -13,6 +13,7 @@ import Letters        from './pages/Letters';
 import AuditLog       from './pages/AuditLog';
 import Verify         from './pages/Verify';
 import Intelligence   from './pages/Intelligence';
+import Settings       from './pages/Settings';
 import NotFound       from './pages/NotFound';
 
 // Protected route wrapper
@@ -51,6 +52,7 @@ const App = () => (
     <Route path="/letters"         element={<ProtectedRoute><Letters /></ProtectedRoute>} />
     <Route path="/letters/new"     element={<ProtectedRoute><LetterDesigner /></ProtectedRoute>} />
     <Route path="/letters/:id/edit" element={<ProtectedRoute><LetterDesigner /></ProtectedRoute>} />
+    <Route path="/settings"        element={<ProtectedRoute><Settings /></ProtectedRoute>} />
     <Route path="/audit"           element={<ProtectedRoute><AuditLog /></ProtectedRoute>} />
 
     {/* 404 */}
