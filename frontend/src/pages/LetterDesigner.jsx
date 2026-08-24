@@ -220,16 +220,29 @@ const LetterDesigner = () => {
 
       let currentId = letterId;
       if (currentId) {
-        await api.put(`/letters/${currentId}`, payload);
-        toast.success(ta ? '💾 வரைவு வெற்றிகரமாக புதுப்பிக்கப்பட்டது' : '💾 Draft updated');
+        try {
+          await api.put(`/letters/${currentId}`, payload);
+          toast.success(ta ? '💾 வரைவு வெற்றிகரமாக புதுப்பிக்கப்பட்டது' : '💾 Draft updated');
+          return currentId;
+        } catch (err) {
+          if (err.response?.status === 404) {
+            const res = await api.post('/letters', payload);
+            currentId = res.data.letter.id;
+            setLetterId(currentId);
+            toast.success(ta ? '💾 வரைவு பாதுகாப்பாக சேமிக்கப்பட்டது' : '💾 Draft saved securely');
+            return currentId;
+          }
+          throw err;
+        }
       } else {
         const res = await api.post('/letters', payload);
         currentId = res.data.letter.id;
         setLetterId(currentId);
         toast.success(ta ? '💾 வரைவு பாதுகாப்பாக சேமிக்கப்பட்டது' : '💾 Draft saved securely');
+        return currentId;
       }
-      return currentId;
-    } catch {
+    } catch (err) {
+      console.error(err);
       toast.error(ta ? 'சேமிப்பு தோல்வி' : 'Save failed');
       return null;
     } finally {

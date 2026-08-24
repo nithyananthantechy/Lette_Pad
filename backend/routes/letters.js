@@ -221,7 +221,7 @@ router.get('/:id', async (req, res) => {
        FROM generated_letters gl
        JOIN letter_profiles lp ON gl.letter_profile_id = lp.id
        LEFT JOIN parties p ON lp.party_id = p.id
-       WHERE gl.id = $1 AND lp.user_id = $2`,
+       WHERE gl.id = $1 AND (gl.generated_by = $2 OR lp.user_id = $2)`,
       [req.params.id, req.user.id]
     );
 
@@ -244,8 +244,7 @@ router.put('/:id', async (req, res) => {
   try {
     const check = await db.query(
       `SELECT gl.id, gl.document_id FROM generated_letters gl
-       JOIN letter_profiles lp ON gl.letter_profile_id = lp.id
-       WHERE gl.id = $1 AND lp.user_id = $2`,
+       WHERE gl.id = $1 AND (gl.generated_by = $2 OR gl.letter_profile_id IN (SELECT id FROM letter_profiles WHERE user_id = $2))`,
       [req.params.id, req.user.id]
     );
 
