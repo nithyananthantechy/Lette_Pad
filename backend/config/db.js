@@ -24,15 +24,38 @@ const poolConfig = process.env.DATABASE_URL
 
 const pool = new Pool(poolConfig);
 
-pool.on('connect', () => {
-  console.log('✅ PostgreSQL Database connected successfully (Neon Cloud / Local)');
+pool.on('error', (err) => {
+  // Gracefully handle remote Neon socket drop on idle
+  if (err.message && (err.message.includes('Connection terminated') || err.message.includes('timeout'))) {
+    console.warn('⚠️ Idle PostgreSQL connection closed by server (will auto-reconnect on next query)');
+  } else {
+    console.error('❌ PostgreSQL pool error:', err.message);
+  }
 });
 
-pool.on('error', (err) => {
-  console.error('❌ PostgreSQL pool error:', err);
-});
+// Robust query executor with auto-retry on stale connection drops
+const query = async (text, params, retries = 2) => {
+  for (let attempt = 1; attempt <= retries + 1; attempt++) {
+    try {
+      return await pool.query(text, params);
+    } catch (err) {
+      const isStaleConn =
+        err.message?.includes('Connection terminated') ||
+        err.message?.includes('timeout') ||
+        err.message?.includes('ECONNRESET') ||
+        err.code === '57P01';
+
+      if (isStaleConn && attempt <= retries) {
+        console.warn(`⚠️ Database query retry ${attempt}/${retries} after stale connection drop...`);
+        await new Promise((r) => setTimeout(r, 500));
+        continue;
+      }
+      throw err;
+    }
+  }
+};
 
 module.exports = {
-  query: (text, params) => pool.query(text, params),
+  query,
   pool,
 };
