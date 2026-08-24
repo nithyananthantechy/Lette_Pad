@@ -71,7 +71,7 @@ const Navbar = () => {
     <header className="sticky top-0 z-50 bg-[#0c1222]/95 backdrop-blur-md border-b border-slate-800 shadow-md select-none w-full">
       
       {/* Top micro-banner for Region & Security */}
-      <div className="bg-gradient-to-r from-blue-950 via-slate-900 to-indigo-950 border-b border-white/5 py-1 px-4 sm:px-6 lg:px-10 text-[11px] text-slate-400 flex items-center justify-between font-tamil w-full">
+      <div className="bg-gradient-to-r from-blue-950 via-slate-900 to-indigo-950 border-b border-white/5 py-1 px-3 sm:px-6 lg:px-8 text-[11px] text-slate-400 flex items-center justify-between font-tamil w-full overflow-x-hidden">
         <div className="flex items-center gap-2">
           <span className="flex items-center gap-1 text-emerald-400 font-medium">
             <ShieldCheck size={13} />
@@ -79,7 +79,7 @@ const Navbar = () => {
             <span className="sm:hidden">பாதுகாப்பானது</span>
           </span>
           <span className="text-slate-600 hidden sm:inline">&bull;</span>
-          <span className="text-slate-400 hidden md:inline">அரசியல் கட்சிகள் &amp; மக்கள் பிரதிநிதிகளுக்கான AI மடல் தளம்</span>
+          <span className="text-slate-400 hidden xl:inline">அரசியல் கட்சிகள் &amp; மக்கள் பிரதிநிதிகளுக்கான AI மடல் தளம்</span>
         </div>
 
         <div className="flex items-center gap-2">
@@ -90,9 +90,9 @@ const Navbar = () => {
         </div>
       </div>
 
-      {/* Main Navbar — Edge to Edge Layout */}
-      <div className="w-full px-4 sm:px-6 lg:px-10">
-        <div className="flex items-center justify-between h-16 gap-4">
+      {/* Main Navbar — Ultra Sleek Edge to Edge Layout */}
+      <div className="w-full px-3 sm:px-4 lg:px-6 max-w-full">
+        <div className="flex items-center justify-between h-15 gap-2 sm:gap-3">
 
           {/* FAR LEFT: Brand Logo */}
           <Link to="/" className="flex items-center group transition-transform hover:opacity-95 flex-shrink-0">
@@ -100,14 +100,14 @@ const Navbar = () => {
           </Link>
 
           {/* CENTER: Navigation Links */}
-          <nav className="hidden lg:flex items-center gap-1.5 bg-slate-900/80 p-1.5 rounded-2xl border border-slate-800 flex-shrink-0">
+          <nav className="hidden lg:flex items-center gap-1 bg-slate-900/80 p-1 rounded-2xl border border-slate-800 flex-shrink">
             {navLinks.map(link => {
               const active = location.pathname === link.to;
               return (
                 <Link
                   key={link.to}
                   to={link.to}
-                  className={`flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl text-xs font-semibold font-tamil transition-all duration-200 whitespace-nowrap
+                  className={`flex items-center gap-1.5 px-2.5 xl:px-3 py-1.5 rounded-xl text-xs font-semibold font-tamil transition-all duration-200 whitespace-nowrap
                     ${active
                       ? 'bg-blue-600 text-white shadow-sm font-bold'
                       : 'text-slate-300 hover:text-white hover:bg-slate-800'}`}
@@ -125,12 +125,12 @@ const Navbar = () => {
           </nav>
 
           {/* FAR RIGHT: User Profile Capsule, Language & Logout */}
-          <div className="hidden md:flex items-center gap-3 flex-shrink-0">
+          <div className="hidden md:flex items-center gap-2 flex-shrink-0">
             
             {/* Language Switch */}
             <button
               onClick={toggleLang}
-              className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-xl text-xs font-semibold text-slate-300 hover:text-white bg-slate-900 border border-slate-800 hover:border-slate-700 transition-all"
+              className="flex items-center gap-1 px-2 py-1.5 rounded-xl text-xs font-semibold text-slate-300 hover:text-white bg-slate-900 border border-slate-800 hover:border-slate-700 transition-all flex-shrink-0"
               title="Change Language"
             >
               <Globe size={13} className="text-blue-400" />
@@ -138,12 +138,12 @@ const Navbar = () => {
             </button>
 
             {user ? (
-              <div className="flex items-center gap-2 pl-2 border-l border-slate-800">
+              <div className="flex items-center gap-1.5 pl-1.5 border-l border-slate-800 flex-shrink-0">
                 
                 {/* User Info Capsule — Links to /settings */}
                 <Link
                   to="/settings"
-                  className="flex items-center gap-2.5 bg-slate-900/90 hover:bg-slate-800 border border-slate-800 hover:border-slate-700 px-3 py-1.5 rounded-xl transition-all group"
+                  className="flex items-center gap-2 bg-slate-900/90 hover:bg-slate-800 border border-slate-800 hover:border-slate-700 px-2.5 py-1.5 rounded-xl transition-all group max-w-[180px]"
                   title={lang === 'ta' ? 'கணக்கு அமைப்புகள் (Settings)' : 'Account Settings'}
                 >
                   <div className="w-7 h-7 rounded-lg overflow-hidden bg-gradient-to-tr from-blue-600 to-indigo-600 text-white font-bold text-xs flex items-center justify-center shadow-xs flex-shrink-0">
@@ -153,12 +153,12 @@ const Navbar = () => {
                       user.full_name ? user.full_name.charAt(0).toUpperCase() : 'U'
                     )}
                   </div>
-                  <div className="text-left">
-                    <div className="text-xs font-bold text-white group-hover:text-blue-300 font-tamil whitespace-nowrap leading-tight transition-colors">
+                  <div className="text-left overflow-hidden">
+                    <div className="text-xs font-bold text-white group-hover:text-blue-300 font-tamil truncate leading-tight transition-colors max-w-[100px] xl:max-w-[120px]">
                       {user.full_name}
                     </div>
-                    <div className="text-[10px] text-blue-400 font-tamil leading-tight">
-                      {user.role === 'party_admin' ? 'கழக நிர்வாகி' : user.role === 'govt_official' ? 'அரசு அலுவலர்' : 'உறுப்பினர்'}
+                    <div className="text-[10px] text-blue-400 font-tamil truncate leading-tight">
+                      {user.role === 'party_admin' ? 'நிர்வாகி' : user.role === 'govt_official' ? 'அரசு அலுவலர்' : 'உறுப்பினர்'}
                     </div>
                   </div>
                 </Link>
@@ -166,7 +166,7 @@ const Navbar = () => {
                 {/* Logout Button */}
                 <button
                   onClick={handleLogout}
-                  className="p-2 text-slate-400 hover:text-red-400 hover:bg-red-950/40 border border-transparent hover:border-red-800/40 rounded-xl transition-all"
+                  className="p-1.5 text-slate-400 hover:text-red-400 hover:bg-red-950/40 border border-transparent hover:border-red-800/40 rounded-xl transition-all flex-shrink-0"
                   title={lang === 'ta' ? 'வெளியேறு' : 'Logout'}
                 >
                   <LogOut size={16} />
@@ -177,13 +177,13 @@ const Navbar = () => {
               <div className="flex items-center gap-2">
                 <Link
                   to="/login"
-                  className="px-4 py-1.5 rounded-xl text-xs font-bold font-tamil text-slate-300 hover:text-white hover:bg-slate-800/80 transition-all"
+                  className="px-3 py-1.5 rounded-xl text-xs font-bold font-tamil text-slate-300 hover:text-white hover:bg-slate-800/80 transition-all"
                 >
                   {lang === 'ta' ? 'உள்நுழைவு' : 'Login'}
                 </Link>
                 <Link
                   to="/register"
-                  className="btn-primary text-xs py-1.5 px-4 shadow-sm font-tamil"
+                  className="btn-primary text-xs py-1.5 px-3.5 shadow-sm font-tamil"
                 >
                   {lang === 'ta' ? 'பதிவு செய்க' : 'Get Started'}
                 </Link>

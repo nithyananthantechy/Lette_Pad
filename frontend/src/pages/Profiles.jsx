@@ -3,7 +3,7 @@ import { useState, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
 import {
   Plus, Building2, User, Trash2, MapPin, Sparkles, CheckCircle2,
-  Shield, X, ShieldAlert, Award, FileText, Check
+  Shield, X, ShieldAlert, Award, FileText, Check, Edit3
 } from 'lucide-react';
 import Navbar from '../components/Navbar';
 import api from '../lib/api';
