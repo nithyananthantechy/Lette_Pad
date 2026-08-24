@@ -96,7 +96,7 @@ const Admin = () => {
       <div className="max-w-7xl mx-auto px-4 py-8">
         
         {/* Master Header */}
-        <div className="bg-gradient-to-r from-slate-950 via-indigo-950 to-slate-900 rounded-3xl p-6 sm:p-8 text-white shadow-xl mb-8 flex flex-col md:flex-row items-start md:items-center justify-between gap-6">
+        <div className="bg-gradient-to-r from-slate-950 via-indigo-950 to-slate-900 rounded-3xl p-6 sm:p-8 text-white shadow-xl mb-6 flex flex-col md:flex-row items-start md:items-center justify-between gap-6">
           <div className="flex items-center gap-4">
             <div className="w-14 h-14 rounded-2xl bg-amber-400/20 border border-amber-400/40 text-amber-300 flex items-center justify-center text-3xl shadow-inner flex-shrink-0">
               👑
@@ -112,8 +112,8 @@ const Admin = () => {
               </div>
               <p className="text-xs text-indigo-200 mt-1">
                 {ta
-                  ? 'கட்டண ஒப்புதல்கள், கட்சிகள், சட்டமன்றத் தொகுதி சுயவிவரங்கள் மற்றும் பயனர் கணக்கு மேலாண்மை'
-                  : 'Complete platform governance, payment approvals, and party letterhead oversight'}
+                  ? 'கட்டண ஒப்புதல்கள், அமைப்பு நிலை மற்றும் பயனர் கணக்கு மேலாண்மை'
+                  : 'Platform governance, payment approvals, and user account management'}
               </p>
             </div>
           </div>
@@ -128,13 +128,28 @@ const Admin = () => {
           </button>
         </div>
 
+        {/* 🔒 ZERO-KNOWLEDGE PRIVACY & MULTI-TENANT ISOLATION BANNER */}
+        <div className="bg-emerald-950/40 border border-emerald-500/30 rounded-2xl p-4 mb-8 text-emerald-200 text-xs flex items-start gap-3 shadow-xs">
+          <Shield className="text-emerald-400 flex-shrink-0 mt-0.5" size={18} />
+          <div>
+            <div className="font-bold text-white text-xs">
+              {ta ? '🔒 கட்சி கடிதங்கள் & ரகசிய தகவல் தனிமைப்படுத்தல் (Zero-Knowledge Privacy Policy)' : '🔒 Zero-Knowledge Multi-Tenant Data Confidentiality'}
+            </div>
+            <div className="text-[11px] text-emerald-300/80 mt-0.5 leading-relaxed">
+              {ta
+                ? 'அரசியல் கட்சிகள் & மக்கள் பிரதிநிதிகள் உருவாக்கும் கடிதங்களின் உள்ளடக்கம், தலைப்பு மற்றும் வரைவுகள் முற்றிலும் மறைகுறியாக்கப்பட்டவை. சட்டப்படி (DPDP Act 2023) எந்தவொரு நிர்வாகியாலும் பிற கட்சிகளின் ரகசிய கடிதங்களைப் பார்க்கவோ படிக்கவோ இயலாது.'
+                : 'Letter contents, subjects, and private communications created by political parties are cryptographically isolated. Admins have zero access to read or view any private party letters.'}
+            </div>
+          </div>
+        </div>
+
         {/* Navigation Tabs */}
         <div className="flex flex-wrap gap-2 mb-8 bg-white p-1.5 rounded-2xl border border-slate-200 shadow-xs max-w-2xl">
           {[
             { id: 'overview', label: ta ? '📊 கண்ணோட்டம்' : 'Overview', count: null },
             { id: 'payments', label: ta ? '💳 கட்டண ஒப்புதல்கள்' : 'Payments', count: payments.filter(p => p.status === 'pending_approval').length },
             { id: 'users',    label: ta ? '👥 பயனர்கள்' : 'Users', count: usersList.length },
-            { id: 'profiles', label: ta ? '🏛️ மடல் சுயவிவரங்கள்' : 'Profiles', count: profiles.length },
+            { id: 'profiles', label: ta ? '🏛️ கட்சி விநியோகம்' : 'Party Distribution', count: profiles.length },
           ].map(tab => (
             <button
               key={tab.id}
