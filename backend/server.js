@@ -56,6 +56,7 @@ const letterRoutes  = require('./routes/letters');
 const auditRoutes   = require('./routes/audit');
 const verifyRoutes  = require('./routes/verify');
 const intelligenceRoutes = require('./routes/intelligence');
+const subscriptionRoutes = require('./routes/subscription');
 
 app.use('/api/auth',    authLimiter, authRoutes);
 app.use('/api/parties', partiesRoutes);
@@ -64,6 +65,7 @@ app.use('/api/letters',  letterRoutes);
 app.use('/api/audit',    auditRoutes);
 app.use('/api/verify',   verifyRoutes);
 app.use('/api/intelligence', intelligenceRoutes);
+app.use('/api/subscription', subscriptionRoutes);
 
 // ── Health Check ──────────────────────────────────────────────
 app.get('/api/health', (req, res) => {

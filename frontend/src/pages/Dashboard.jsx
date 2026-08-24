@@ -29,17 +29,20 @@ const Dashboard = () => {
 
   const [letters, setLetters]   = useState([]);
   const [profiles, setProfiles] = useState([]);
+  const [subInfo, setSubInfo]   = useState(null);
   const [loading, setLoading]   = useState(true);
 
   useEffect(() => {
     const load = async () => {
       try {
-        const [lRes, pRes] = await Promise.all([
+        const [lRes, pRes, sRes] = await Promise.all([
           api.get('/letters?limit=5'),
           api.get('/profiles'),
+          api.get('/subscription/status').catch(() => ({ data: null })),
         ]);
         setLetters(lRes.data.letters || []);
         setProfiles(pRes.data.profiles || []);
+        if (sRes.data?.subscription) setSubInfo(sRes.data.subscription);
       } catch { toast.error(ta ? 'தரவு ஏற்றுவதில் பிழை' : 'Failed to load data'); }
       finally { setLoading(false); }
     };
@@ -73,9 +76,29 @@ const Dashboard = () => {
   };
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-gray-50 font-tamil">
       <Navbar />
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+
+        {/* Subscription Expired Alert */}
+        {subInfo?.is_expired && (
+          <div className="bg-gradient-to-r from-red-600 to-rose-700 text-white p-4 rounded-2xl shadow-md mb-6 flex flex-col sm:flex-row items-center justify-between gap-3">
+            <div className="flex items-center gap-3">
+              <span className="text-2xl">🔒</span>
+              <div className="text-xs">
+                <div className="font-bold text-sm">
+                  {ta ? 'உங்கள் 7 நாள் இலவச சோதனைக் காலம் முடிவடைந்தது' : 'Your 7-Day Free Trial Has Expired'}
+                </div>
+                <div className="text-red-100 mt-0.5">
+                  {ta ? 'கடிதங்கள் தயாரிக்க மற்றும் முழுமையான சேவையைப் பெற சந்தாவை புதுப்பிக்கவும்.' : 'Please subscribe to continue drafting and printing official letters.'}
+                </div>
+              </div>
+            </div>
+            <Link to="/subscription" className="px-4 py-2 bg-white text-red-700 font-bold rounded-xl text-xs shadow-sm hover:bg-red-50 flex-shrink-0 transition-colors">
+              {ta ? 'Google Pay மூலம் புதுப்பி →' : 'Renew with Google Pay →'}
+            </Link>
+          </div>
+        )}
 
         {/* Welcome Banner */}
         <div className="bg-gradient-to-r from-[#1a1a2e] to-[#0f3460] rounded-3xl p-8 text-white mb-8 shadow-xl">
@@ -87,19 +110,44 @@ const Dashboard = () => {
               <p className="text-blue-200 font-tamil mt-1 text-sm">
                 {ta ? 'உங்கள் AI மடல் தளத்திற்கு வரவேற்கிறோம்' : 'Your AI Letter Pad Platform'}
               </p>
-              <div className="mt-2 inline-flex items-center gap-2 bg-white/10 px-3 py-1 rounded-full text-xs">
-                <span className="w-2 h-2 bg-green-400 rounded-full animate-pulse"></span>
-                {user?.role.replace('_', ' ')}
+              
+              <div className="mt-3 flex flex-wrap items-center gap-2">
+                <div className="inline-flex items-center gap-2 bg-white/10 px-3 py-1 rounded-full text-xs">
+                  <span className="w-2 h-2 bg-green-400 rounded-full animate-pulse"></span>
+                  {user?.role.replace('_', ' ')}
+                </div>
+
+                {subInfo && (
+                  <Link
+                    to="/subscription"
+                    className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold transition-all border
+                      ${subInfo.status === 'active'
+                        ? 'bg-emerald-500/20 text-emerald-300 border-emerald-500/40 hover:bg-emerald-500/30'
+                        : subInfo.is_expired
+                          ? 'bg-red-500/20 text-red-300 border-red-500/40 hover:bg-red-500/30'
+                          : 'bg-amber-400/20 text-amber-300 border-amber-400/40 hover:bg-amber-400/30'}`}
+                  >
+                    <span>{subInfo.status === 'active' ? '👑' : '✨'}</span>
+                    <span>
+                      {subInfo.status === 'active'
+                        ? (ta ? `செயலில் உள்ள சந்தா (${subInfo.days_remaining} நாட்கள்)` : `Active (${subInfo.days_remaining} days)`)
+                        : subInfo.is_expired
+                          ? (ta ? 'சந்தா தேவை' : 'Subscription Required')
+                          : (ta ? `7 நாள் சோதனை: இன்னும் ${subInfo.days_remaining} நாட்கள்` : `7-Day Trial: ${subInfo.days_remaining} days left`)}
+                    </span>
+                  </Link>
+                )}
               </div>
             </div>
+
             <div className="flex gap-3">
               <Link to="/letters/new"
                 className="flex items-center gap-2 bg-blue-600 hover:bg-blue-500 px-5 py-3 rounded-xl font-semibold font-tamil transition-colors text-sm shadow-lg">
                 <Plus size={18} /> {ta ? 'புதிய கடிதம்' : 'New Letter'}
               </Link>
-              <Link to="/profiles"
-                className="flex items-center gap-2 bg-white/10 hover:bg-white/20 px-5 py-3 rounded-xl font-semibold font-tamil transition-colors text-sm border border-white/20">
-                <User size={18} /> {ta ? 'சுயவிவரம்' : 'Profile'}
+              <Link to="/subscription"
+                className="flex items-center gap-2 bg-white/10 hover:bg-white/20 px-4 py-3 rounded-xl font-semibold font-tamil transition-colors text-sm border border-white/20">
+                <span>💳</span> {ta ? 'கட்டணம்' : 'Billing'}
               </Link>
             </div>
           </div>
