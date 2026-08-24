@@ -4,7 +4,7 @@ import { useTranslation } from 'react-i18next';
 import {
   Shield, FileText, QrCode, TrendingUp, CheckCircle2, Lock,
   ShieldAlert, Sparkles, Building2, UserCheck, ArrowRight,
-  Database, Server, Award, PhoneCall
+  Database, Server, Award, PhoneCall, ShieldCheck
 } from 'lucide-react';
 import Navbar from '../components/Navbar';
 
