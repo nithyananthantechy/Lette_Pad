@@ -1,4 +1,4 @@
-// routes/letters.js — Letter Generation Routes
+// routes/letters.js — Letter Generation & Management API
 const express = require('express');
 const router  = express.Router();
 const crypto  = require('crypto');
@@ -25,14 +25,13 @@ const generateDocumentId = async (partyAbbr = 'TN') => {
 
 // ── POST /api/letters/ai/generate — AI draft a letter ────────
 router.post('/ai/generate', async (req, res) => {
-  const { subject, context, language, profileId, recipientName, tone } = req.body;
+  const { subject, context, language, profileId, recipientName, tone, category, constituency, district } = req.body;
 
   if (!subject || !context) {
     return res.status(400).json({ success: false, message: 'Subject and context are required.' });
   }
 
   try {
-    const { subject, context, language, profileId, recipientName, tone, category, constituency, district } = req.body;
     let designation = '';
     let profileConstituency = constituency || '';
     if (profileId) {
@@ -131,7 +130,6 @@ router.post('/', async (req, res) => {
   }
 
   try {
-    // Verify profile ownership
     const profileResult = await db.query(
       `SELECT lp.*, p.abbreviation, p.name_en, p.name_ta,
               p.primary_color, p.secondary_color, p.symbol_description
@@ -149,7 +147,6 @@ router.post('/', async (req, res) => {
     const abbreviation = profile.abbreviation || 'GEN';
     const documentId = await generateDocumentId(abbreviation);
 
-    // Create hash for integrity
     const content = JSON.stringify({ subject_en, subject_ta, body_en, body_ta, documentId });
     const document_hash = crypto.createHash('sha256').update(content).digest('hex');
     const qr_code_data = `${process.env.FRONTEND_URL || 'http://localhost:3000'}/verify/${documentId}`;
@@ -227,6 +224,15 @@ router.get('/:id', async (req, res) => {
        WHERE gl.id = $1 AND lp.user_id = $2`,
       [req.params.id, req.user.id]
     );
+
+    if (!result.rows[0]) {
+      return res.status(404).json({ success: false, message: 'Letter not found.' });
+    }
+    res.json({ success: true, letter: result.rows[0] });
+  } catch (err) {
+    res.status(500).json({ success: false, message: 'Failed to fetch letter.' });
+  }
+});
 
 // ── PUT /api/letters/:id — Update existing letter ───────────────
 router.put('/:id', async (req, res) => {
