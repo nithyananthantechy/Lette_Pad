@@ -210,7 +210,8 @@ const buildLetterHTML = async (letterData) => {
   const profileName = profile?.profile_name_ta || profile?.profile_name_en || '';
   const designation = profile?.designation_ta || profile?.designation_en || profile?.party_role || 'மாவட்ட செயலாளர்';
   const constituency = profile?.constituency || '';
-  const district = profile?.district || (constituency ? constituency.split(' ')[0] : 'ஈரோடு மாவட்டம்');
+  const district = profile?.district || (constituency ? constituency.split(' ')[0] : 'ஈரோடு');
+  const districtName = district.includes('மாவட்டம்') ? district : `${district} மாவட்டம்`;
   const address = profile?.address_ta || profile?.address_en || '';
   const phone = profile?.phone || '';
   const email = profile?.email || '';
