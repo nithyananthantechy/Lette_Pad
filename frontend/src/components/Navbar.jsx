@@ -1,4 +1,4 @@
-// src/components/Navbar.jsx — Optimized Modern Navbar
+// src/components/Navbar.jsx — Full Width Edge-to-Edge Optimized Navbar
 import { useState } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
@@ -68,10 +68,10 @@ const Navbar = () => {
   ];
 
   return (
-    <header className="sticky top-0 z-50 bg-[#0c1222]/95 backdrop-blur-md border-b border-slate-800 shadow-lg select-none">
+    <header className="sticky top-0 z-50 bg-[#0c1222]/95 backdrop-blur-md border-b border-slate-800 shadow-md select-none w-full">
       
       {/* Top micro-banner for Region & Security */}
-      <div className="bg-gradient-to-r from-blue-950 via-slate-900 to-indigo-950 border-b border-white/5 py-1 px-4 text-[11px] text-slate-400 flex items-center justify-between font-tamil">
+      <div className="bg-gradient-to-r from-blue-950 via-slate-900 to-indigo-950 border-b border-white/5 py-1 px-4 sm:px-6 lg:px-10 text-[11px] text-slate-400 flex items-center justify-between font-tamil w-full">
         <div className="flex items-center gap-2">
           <span className="flex items-center gap-1 text-emerald-400 font-medium">
             <ShieldCheck size={13} />
@@ -83,34 +83,34 @@ const Navbar = () => {
         </div>
 
         <div className="flex items-center gap-2">
-          <span className="bg-blue-900/60 border border-blue-500/30 text-blue-300 px-2 py-0.2 rounded-full flex items-center gap-1 font-semibold text-[10px]">
+          <span className="bg-blue-900/60 border border-blue-500/30 text-blue-300 px-2.5 py-0.5 rounded-full flex items-center gap-1 font-semibold text-[10px]">
             <MapPin size={10} className="text-blue-400" />
             <span>ஈரோடு மண்டலம் (Erode Hub)</span>
           </span>
         </div>
       </div>
 
-      {/* Main Navbar */}
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="flex items-center justify-between h-16">
+      {/* Main Navbar — Edge to Edge Layout */}
+      <div className="w-full px-4 sm:px-6 lg:px-10">
+        <div className="flex items-center justify-between h-16 gap-4">
 
-          {/* Left: Brand Logo */}
-          <Link to="/" className="flex items-center group transition-transform hover:opacity-95">
+          {/* FAR LEFT: Brand Logo */}
+          <Link to="/" className="flex items-center group transition-transform hover:opacity-95 flex-shrink-0">
             <Logo size="md" />
           </Link>
 
-          {/* Center: Desktop Navigation Links */}
-          <nav className="hidden lg:flex items-center gap-1 bg-slate-900/70 p-1 rounded-2xl border border-slate-800/80">
+          {/* CENTER: Navigation Links */}
+          <nav className="hidden lg:flex items-center gap-1.5 bg-slate-900/80 p-1.5 rounded-2xl border border-slate-800 flex-shrink-0">
             {navLinks.map(link => {
               const active = location.pathname === link.to;
               return (
                 <Link
                   key={link.to}
                   to={link.to}
-                  className={`flex items-center gap-2 px-3.5 py-1.5 rounded-xl text-xs font-semibold font-tamil transition-all duration-200
+                  className={`flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl text-xs font-semibold font-tamil transition-all duration-200 whitespace-nowrap
                     ${active
                       ? 'bg-blue-600 text-white shadow-sm font-bold'
-                      : 'text-slate-300 hover:text-white hover:bg-slate-800/70'}`}
+                      : 'text-slate-300 hover:text-white hover:bg-slate-800'}`}
                 >
                   {link.icon}
                   <span>{link.label}</span>
@@ -124,8 +124,8 @@ const Navbar = () => {
             })}
           </nav>
 
-          {/* Right: User profile, Language, Logout */}
-          <div className="hidden md:flex items-center gap-3">
+          {/* FAR RIGHT: User Profile Capsule, Language & Logout */}
+          <div className="hidden md:flex items-center gap-3 flex-shrink-0">
             
             {/* Language Switch */}
             <button
@@ -138,15 +138,15 @@ const Navbar = () => {
             </button>
 
             {user ? (
-              <div className="flex items-center gap-2.5 pl-2 border-l border-slate-800">
+              <div className="flex items-center gap-2 pl-2 border-l border-slate-800">
                 
                 {/* User Info Capsule */}
                 <div className="flex items-center gap-2.5 bg-slate-900/90 border border-slate-800 px-3 py-1.5 rounded-xl">
-                  <div className="w-7 h-7 rounded-lg bg-gradient-to-tr from-blue-600 to-indigo-600 text-white font-bold text-xs flex items-center justify-center shadow-xs">
+                  <div className="w-7 h-7 rounded-lg bg-gradient-to-tr from-blue-600 to-indigo-600 text-white font-bold text-xs flex items-center justify-center shadow-xs flex-shrink-0">
                     {user.full_name ? user.full_name.charAt(0).toUpperCase() : 'U'}
                   </div>
                   <div className="text-left">
-                    <div className="text-xs font-bold text-white font-tamil truncate max-w-[130px] leading-tight">
+                    <div className="text-xs font-bold text-white font-tamil whitespace-nowrap leading-tight">
                       {user.full_name}
                     </div>
                     <div className="text-[10px] text-blue-400 font-tamil leading-tight">

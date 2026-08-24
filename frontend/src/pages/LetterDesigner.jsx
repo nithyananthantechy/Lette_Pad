@@ -293,22 +293,6 @@ const LetterDesigner = () => {
     <div className="min-h-screen bg-slate-50">
       <Navbar />
 
-      {/* Top Banner with Privacy & Isolation Seal */}
-      <div className="bg-gradient-to-r from-slate-900 via-indigo-950 to-slate-900 border-b border-slate-800 text-white py-3 px-4 shadow-sm">
-        <div className="max-w-7xl mx-auto flex flex-col sm:flex-row items-center justify-between gap-2 text-xs font-tamil">
-          <div className="flex items-center gap-2 text-sky-400">
-            <Lock size={14} className="text-emerald-400" />
-            <span className="font-semibold text-white">100% கட்சி/அலுவலக தனிப்பாதுகாப்பு:</span>
-            <span>உங்கள் கட்சி மற்றும் கடிதத் தரவுகள் தனிப்பட்ட முறையில் குறியாக்கம் செய்யப்பட்டுள்ளன.</span>
-          </div>
-          <div className="flex items-center gap-3">
-            <span className="bg-emerald-500/20 text-emerald-300 border border-emerald-500/30 px-2.5 py-0.5 rounded-full font-mono text-[11px]">
-              📍 ஈரோடு மண்டல சிறப்புப் பதிப்பு (Erode Edition)
-            </span>
-          </div>
-        </div>
-      </div>
-
       <div className="max-w-7xl mx-auto px-4 py-6">
         
         {/* Action Header */}
