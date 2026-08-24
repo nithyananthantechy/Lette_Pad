@@ -6,6 +6,7 @@ import { useAuth } from './context/AuthContext';
 import Landing        from './pages/Landing';
 import Login          from './pages/Login';
 import Register       from './pages/Register';
+import ForgotPassword from './pages/ForgotPassword';
 import Dashboard      from './pages/Dashboard';
 import LetterDesigner from './pages/LetterDesigner';
 import Profiles       from './pages/Profiles';
@@ -40,10 +41,11 @@ const PublicRoute = ({ children }) => {
 const App = () => (
   <Routes>
     {/* Public */}
-    <Route path="/"          element={<Landing />} />
+    <Route path="/"                 element={<Landing />} />
     <Route path="/verify/:documentId" element={<Verify />} />
-    <Route path="/login"     element={<PublicRoute><Login /></PublicRoute>} />
-    <Route path="/register"  element={<PublicRoute><Register /></PublicRoute>} />
+    <Route path="/login"            element={<PublicRoute><Login /></PublicRoute>} />
+    <Route path="/register"         element={<PublicRoute><Register /></PublicRoute>} />
+    <Route path="/forgot-password"  element={<PublicRoute><ForgotPassword /></PublicRoute>} />
 
     {/* Protected */}
     <Route path="/dashboard"       element={<ProtectedRoute><Dashboard /></ProtectedRoute>} />
