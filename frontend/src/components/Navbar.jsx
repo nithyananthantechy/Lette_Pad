@@ -37,6 +37,22 @@ const Navbar = () => {
     navigate('/');
   };
 
+  const handleNavClick = (e, to) => {
+    if (to.includes('#')) {
+      const hash = to.substring(to.indexOf('#') + 1);
+      if (location.pathname === '/') {
+        e.preventDefault();
+        const el = document.getElementById(hash);
+        if (el) {
+          el.scrollIntoView({ behavior: 'smooth', block: 'start' });
+          window.history.pushState(null, '', `/#${hash}`);
+        }
+      } else {
+        navigate(`/#${hash}`);
+      }
+    }
+  };
+
   const navLinks = user ? [
     {
       to: '/dashboard',
@@ -128,15 +144,33 @@ const Navbar = () => {
           {/* CENTER: Navigation Links */}
           <nav className="hidden lg:flex items-center gap-1 bg-slate-900/80 p-1 rounded-2xl border border-slate-800 flex-shrink">
             {navLinks.map(link => {
-              const active = location.pathname === link.to;
-              return (
+              const isHash = link.to.includes('#');
+              const active = !isHash && location.pathname === link.to;
+              const linkClasses = `flex items-center gap-1.5 px-2.5 xl:px-3 py-1.5 rounded-xl text-xs font-semibold font-tamil transition-all duration-200 whitespace-nowrap
+                ${active
+                  ? 'bg-blue-600 text-white shadow-sm font-bold'
+                  : 'text-slate-300 hover:text-white hover:bg-slate-800'}`;
+
+              return isHash ? (
+                <a
+                  key={link.to}
+                  href={link.to}
+                  onClick={(e) => handleNavClick(e, link.to)}
+                  className={linkClasses}
+                >
+                  {link.icon}
+                  <span>{link.label}</span>
+                  {link.badge && (
+                    <span className="bg-amber-400 text-slate-950 text-[9px] font-black px-1.5 py-0.2 rounded-full ml-0.5 shadow-2xs">
+                      {link.badge}
+                    </span>
+                  )}
+                </a>
+              ) : (
                 <Link
                   key={link.to}
                   to={link.to}
-                  className={`flex items-center gap-1.5 px-2.5 xl:px-3 py-1.5 rounded-xl text-xs font-semibold font-tamil transition-all duration-200 whitespace-nowrap
-                    ${active
-                      ? 'bg-blue-600 text-white shadow-sm font-bold'
-                      : 'text-slate-300 hover:text-white hover:bg-slate-800'}`}
+                  className={linkClasses}
                 >
                   {link.icon}
                   <span>{link.label}</span>
@@ -252,25 +286,48 @@ const Navbar = () => {
           )}
 
           <div className="space-y-1">
-            {navLinks.map(link => (
-              <Link
-                key={link.to}
-                to={link.to}
-                onClick={() => setMenuOpen(false)}
-                className={`flex items-center justify-between px-3 py-2.5 rounded-xl text-xs font-semibold
-                  ${location.pathname === link.to ? 'bg-blue-600 text-white font-bold' : 'text-slate-300 hover:bg-slate-900'}`}
-              >
-                <span className="flex items-center gap-2.5">
-                  {link.icon}
-                  <span>{link.label}</span>
-                </span>
-                {link.badge && (
-                  <span className="bg-amber-400 text-slate-950 text-[9px] font-black px-1.5 py-0.2 rounded-full">
-                    {link.badge}
+            {navLinks.map(link => {
+              const isHash = link.to.includes('#');
+              const active = !isHash && location.pathname === link.to;
+              const linkClasses = `flex items-center justify-between px-3 py-2.5 rounded-xl text-xs font-semibold
+                ${active ? 'bg-blue-600 text-white font-bold' : 'text-slate-300 hover:bg-slate-900'}`;
+
+              return isHash ? (
+                <a
+                  key={link.to}
+                  href={link.to}
+                  onClick={(e) => { setMenuOpen(false); handleNavClick(e, link.to); }}
+                  className={linkClasses}
+                >
+                  <span className="flex items-center gap-2.5">
+                    {link.icon}
+                    <span>{link.label}</span>
                   </span>
-                )}
-              </Link>
-            ))}
+                  {link.badge && (
+                    <span className="bg-amber-400 text-slate-950 text-[9px] font-black px-1.5 py-0.2 rounded-full">
+                      {link.badge}
+                    </span>
+                  )}
+                </a>
+              ) : (
+                <Link
+                  key={link.to}
+                  to={link.to}
+                  onClick={() => setMenuOpen(false)}
+                  className={linkClasses}
+                >
+                  <span className="flex items-center gap-2.5">
+                    {link.icon}
+                    <span>{link.label}</span>
+                  </span>
+                  {link.badge && (
+                    <span className="bg-amber-400 text-slate-950 text-[9px] font-black px-1.5 py-0.2 rounded-full">
+                      {link.badge}
+                    </span>
+                  )}
+                </Link>
+              );
+            })}
           </div>
 
           {user ? (
