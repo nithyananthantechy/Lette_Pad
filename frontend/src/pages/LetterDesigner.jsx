@@ -58,6 +58,7 @@ const LetterDesigner = () => {
   const [letterLang, setLetterLang]           = useState('ta');
 
   // Form states
+  const [mobileTab, setMobileTab]       = useState('editor'); // 'editor' | 'preview'
   const [category, setCategory]         = useState('petition');
   const [tone, setTone]                 = useState('formal');
   const [constituency, setConstituency] = useState('ஈரோடு கிழக்கு (Erode East)');
@@ -321,10 +322,28 @@ const LetterDesigner = () => {
           </div>
         </div>
 
+        {/* Mobile View Switcher Tab (Visible on mobile/tablet) */}
+        <div className="lg:hidden flex items-center bg-slate-200/90 p-1 rounded-2xl mb-4 font-tamil shadow-inner">
+          <button
+            onClick={() => setMobileTab('editor')}
+            className={`flex-1 py-3 rounded-xl text-xs font-bold transition-all flex items-center justify-center gap-1.5
+              ${mobileTab === 'editor' ? 'bg-blue-600 text-white shadow-md' : 'text-slate-700 hover:text-slate-900'}`}
+          >
+            <FileText size={15} /> {ta ? '✏️ கடிதம் திருத்து' : 'Editor'}
+          </button>
+          <button
+            onClick={() => setMobileTab('preview')}
+            className={`flex-1 py-3 rounded-xl text-xs font-bold transition-all flex items-center justify-center gap-1.5
+              ${mobileTab === 'preview' ? 'bg-blue-600 text-white shadow-md' : 'text-slate-700 hover:text-slate-900'}`}
+          >
+            <Eye size={15} /> {ta ? '👁️ மடல் முன்னோட்டம்' : 'Live Preview'}
+          </button>
+        </div>
+
         <div className="grid lg:grid-cols-12 gap-6">
 
           {/* LEFT COLUMN: Controls & Editor (7 Cols) */}
-          <div className="lg:col-span-7 space-y-5">
+          <div className={`lg:col-span-7 space-y-5 ${mobileTab === 'editor' ? 'block' : 'hidden lg:block'}`}>
 
             {/* 1. Profile & Constituency Selector */}
             <div className="bg-white p-5 rounded-2xl border border-slate-200/80 shadow-sm">
@@ -646,7 +665,7 @@ const LetterDesigner = () => {
           </div>
 
           {/* RIGHT COLUMN: Live Interactive A4 Letterhead Preview (5 Cols) */}
-          <div className="lg:col-span-5">
+          <div className={`lg:col-span-5 ${mobileTab === 'preview' ? 'block' : 'hidden lg:block'}`}>
             <div className="sticky top-20">
               
               <div className="flex items-center justify-between mb-2">
@@ -654,11 +673,19 @@ const LetterDesigner = () => {
                   <Eye size={14} className="text-blue-600" />
                   {ta ? 'நேரலை A4 முன்னோட்டம் (Live Preview)' : 'Live A4 Preview'}
                 </span>
-                <span className="text-[10px] text-slate-400 font-mono">210mm × 297mm A4</span>
+                <div className="flex items-center gap-2">
+                  <button
+                    onClick={() => setMobileTab('editor')}
+                    className="lg:hidden text-[11px] font-bold text-blue-600 bg-blue-50 px-2.5 py-1 rounded-lg border border-blue-200 font-tamil"
+                  >
+                    ✏️ {ta ? 'திருத்து' : 'Edit'}
+                  </button>
+                  <span className="text-[10px] text-slate-400 font-mono">210mm × 297mm A4</span>
+                </div>
               </div>
 
               {/* A4 Sheet Container */}
-              <div className="bg-white rounded-xl shadow-xl border border-slate-200 p-6 min-h-[620px] flex flex-col justify-between relative overflow-hidden">
+              <div className="bg-white rounded-xl shadow-xl border border-slate-200 p-4 sm:p-6 min-h-[580px] sm:min-h-[620px] flex flex-col justify-between relative overflow-hidden overflow-x-auto">
                 
                 {/* Watermark layer */}
                 {watermark !== 'none' && (
@@ -748,36 +775,35 @@ const LetterDesigner = () => {
                     if (layoutStyle === 'mla_govt') {
                       return (
                         <div className="border-b-2 border-slate-900 pb-3 mb-4 flex items-center gap-3">
-                          <div className="w-10 h-10 rounded-full bg-slate-900 text-white flex items-center justify-center text-lg flex-shrink-0">
-                            🏛️
+                          <div className="w-12 h-14 bg-amber-50 border border-amber-300 rounded flex flex-col items-center justify-center text-center flex-shrink-0">
+                            <span className="text-2xl">🏛️</span>
+                            <span className="text-[5.5px] font-black text-amber-900 leading-tight">GOVT OF TN</span>
                           </div>
-                          <div>
-                            <div className="font-extrabold text-xs text-slate-900 font-tamil">
-                              {selectedProfile?.profile_name_ta || selectedProfile?.profile_name_en || 'பெயர்'}
-                            </div>
-                            <div className="text-[10px] font-semibold text-slate-700 font-tamil">
-                              {selectedProfile?.designation_ta || selectedProfile?.party_role || 'சட்டமன்ற உறுப்பினர்'}
-                            </div>
-                            <div className="text-[9px] text-slate-500 font-tamil">
-                              {constituency} &bull; தமிழ்நாடு சட்டமன்றப் பேரவை
-                            </div>
+                          <div className="flex-1">
+                            <div className="text-[11px] font-extrabold text-slate-900 font-tamil leading-tight">{selectedProfile?.designation_ta || selectedProfile?.designation_en || 'சட்டமன்ற உறுப்பினர் (MLA)'}</div>
+                            <div className="text-[10px] font-bold text-blue-900 font-tamil">{constituency}</div>
+                            <div className="text-[8px] text-slate-500 font-tamil">{selectedProfile?.address_ta || selectedProfile?.address_en || 'தமிழ்நாடு சட்டமன்றப் பேரவை, தலைமைச் செயலகம், சென்னை'}</div>
                           </div>
                         </div>
                       );
                     }
 
+                    // Default classic
                     return (
-                      <div className="mb-4">
-                        <div className="p-3 rounded-t-lg text-white flex items-center gap-3"
-                          style={{ background: `linear-gradient(135deg, ${profileColor} 0%, ${profileColor}dd 100%)` }}>
-                          <div className="w-9 h-9 rounded-full bg-white/20 border border-white/40 flex items-center justify-center font-bold text-xs">
-                            {(selectedProfile?.abbreviation || 'TN').substring(0, 3)}
+                      <div className="border-b-2 pb-3 mb-4 flex items-center justify-between gap-3" style={{ borderColor: profileColor }}>
+                        <div className="flex-1">
+                          <div className="text-[8px] font-bold uppercase tracking-wider" style={{ color: profileColor }}>
+                            {selectedProfile?.party_name_ta || selectedProfile?.party_name_en || 'கழக அலுவலகம்'}
                           </div>
-                          <div className="min-w-0">
-                            <div className="font-bold text-xs font-tamil truncate">{selectedProfile?.party_name_ta || selectedProfile?.party_name_en || 'கட்சிப் பெயர்'}</div>
-                            <div className="text-[11px] font-semibold font-tamil truncate">{selectedProfile?.profile_name_ta || selectedProfile?.profile_name_en || 'பெயர்'}</div>
-                            <div className="text-[9px] opacity-85 font-tamil truncate">{selectedProfile?.party_role || 'கழகப் பொறுப்பாளர்'} ({constituency})</div>
+                          <div className="text-sm font-extrabold text-slate-900 font-tamil">
+                            {selectedProfile?.profile_name_ta || selectedProfile?.profile_name_en}
                           </div>
+                          <div className="text-[9.5px] font-semibold text-slate-600 font-tamil">
+                            {selectedProfile?.party_role || selectedProfile?.designation_ta || selectedProfile?.designation_en} &bull; {constituency}
+                          </div>
+                        </div>
+                        <div className="w-10 h-10 rounded-full flex items-center justify-center text-white font-black text-xs shadow-xs flex-shrink-0" style={{ backgroundColor: profileColor }}>
+                          {abbr ? abbr.substring(0, 3) : '★'}
                         </div>
                       </div>
                     );
