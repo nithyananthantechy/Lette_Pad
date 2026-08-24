@@ -44,7 +44,11 @@ const Login = () => {
       const res = await api.post('/auth/login/verify-otp', { email: emailForOTP, otp: data.otp });
       login(res.data.user, res.data.accessToken, res.data.refreshToken);
       toast.success(ta ? '✅ வெற்றிகரமாக உள்நுழைந்தீர்கள்!' : '✅ Logged in successfully!');
-      navigate('/dashboard');
+      if (res.data.user.role === 'super_admin') {
+        navigate('/admin');
+      } else {
+        navigate('/dashboard');
+      }
     } catch (err) {
       toast.error(err.response?.data?.message || (ta ? 'OTP தவறானது' : 'Invalid OTP'));
     } finally {

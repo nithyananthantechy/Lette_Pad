@@ -140,7 +140,13 @@ const Dashboard = () => {
               </div>
             </div>
 
-            <div className="flex gap-3">
+            <div className="flex flex-wrap gap-2.5">
+              {user?.role === 'super_admin' && (
+                <Link to="/admin"
+                  className="flex items-center gap-1.5 bg-amber-400 hover:bg-amber-300 text-slate-950 px-4 py-3 rounded-xl font-bold font-tamil transition-colors text-sm shadow-lg">
+                  <span>👑</span> {ta ? 'முதன்மை நிர்வாகம்' : 'Admin Panel'}
+                </Link>
+              )}
               <Link to="/letters/new"
                 className="flex items-center gap-2 bg-blue-600 hover:bg-blue-500 px-5 py-3 rounded-xl font-semibold font-tamil transition-colors text-sm shadow-lg">
                 <Plus size={18} /> {ta ? 'புதிய கடிதம்' : 'New Letter'}
