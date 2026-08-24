@@ -1,17 +1,13 @@
-// src/pages/Profiles.jsx — Enterprise Letterhead Profiles Manager
+// src/pages/Profiles.jsx — Enterprise Letterhead Profiles Management (Party vs Government Mode)
 import { useState, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Plus, X, User, Trash2, ShieldCheck, MapPin, Building, Sparkles, Lock } from 'lucide-react';
+import {
+  Plus, Building2, User, Trash2, MapPin, Sparkles, CheckCircle2,
+  Shield, X, ShieldAlert, Award, FileText, Check
+} from 'lucide-react';
 import Navbar from '../components/Navbar';
 import api from '../lib/api';
 import toast from 'react-hot-toast';
-
-const LAYOUT_OPTIONS = [
-  { id: 'classic',       name_ta: 'கழக பிரம்மாண்டம் (Party High-Impact)',   icon: '🏳️' },
-  { id: 'mla_govt',      name_ta: 'சட்டமன்ற உறுப்பினர் / அரசு நடை (MLA Style)', icon: '🏛️' },
-  { id: 'press_release', name_ta: 'பத்திரிகை செய்தி அறிக்கை (Press Release)', icon: '📢' },
-  { id: 'minimal',       name_ta: 'நிர்வாக சுருக்கம் (Executive Minimal)',    icon: '📄' },
-];
 
 const ERODE_CONSTITUENCIES = [
   'ஈரோடு கிழக்கு (Erode East)',
@@ -22,26 +18,31 @@ const ERODE_CONSTITUENCIES = [
   'அந்தியூர் (Anthiyur)',
   'கோபிசெட்டிபாளையம் (Gobichettipalayam)',
   'பவானிசாகர் (Bhavanisagar)',
-  'ஈரோடு நாடாளுமன்றத் தொகுதி (Erode Lok Sabha MP)',
-  'சென்னை - எழும்பூர் (Egmore)',
+  'சென்னை மத்தியம் (Chennai Central)',
   'கோயம்புத்தூர் தெற்கு (Coimbatore South)',
-  'மதுரை மத்திய (Madurai Central)',
-  'திருச்சி கிழக்கு (Trichy East)',
+  'மதுரை மத்தியம் (Madurai Central)',
   'சேலம் வடக்கு (Salem North)',
+  'திருச்சி கிழக்கு (Trichy East)',
+  'பொதுவான நிர்வாகம் / பிற தொகுதிகள்'
 ];
 
-const COMMON_DESIGNATIONS = [
-  'சட்டமன்ற உறுப்பினர் (MLA)',
-  'நாடாளுமன்ற உறுப்பினர் (MP)',
-  'மாவட்ட கழகச் செயலாளர்',
-  'மாவட்ட இளைஞரணி செயலாளர்',
-  'ஒன்றிய செயலாளர்',
-  'நகர கழகச் செயலாளர்',
-  'மாநில பொதுக்குழு உறுப்பினர்',
-  'தலைமை செயற்குழு உறுப்பினர்',
-  'மகளிர் அணி செயலாளர்',
-  'வழக்கறிஞர் அணி செயலாளர்',
-  'மாவட்ட ஆட்சியர் (District Collector)',
+const GOVT_DEPARTMENTS = [
+  { id: 'mla_mp',       name_ta: '🏛️ சட்டமன்ற உறுப்பினர் (MLA) / நாடாளுமன்ற உறுப்பினர் (MP)', default_role_ta: 'சட்டமன்ற உறுப்பினர் (MLA)', default_role_en: 'Member of Legislative Assembly (MLA)' },
+  { id: 'collectorate', name_ta: '🏢 மாவட்ட ஆட்சியர் அலுவலகம் & வருவாய்த்துறை (Collectorate)', default_role_ta: 'மாவட்ட ஆட்சியர் மற்றும் மாவட்ட நீதிபதி (IAS)', default_role_en: 'District Collector & District Magistrate (IAS)' },
+  { id: 'corporation',  name_ta: '🏙️ மாநகராட்சி / நகராட்சி நிர்வாகம் (Corporation / Municipality)', default_role_ta: 'மாநகராட்சி ஆணையர்', default_role_en: 'Corporation Commissioner' },
+  { id: 'police',       name_ta: '👮 காவல் துறை (Tamil Nadu Police - SP / DSP)', default_role_ta: 'மாவட்ட காவல் கண்காணிப்பாளர் (IPS)', default_role_en: 'Superintendent of Police (IPS)' },
+  { id: 'pwd',          name_ta: '🏗️ பொதுப்பணித்துறை (PWD) / நெடுஞ்சாலைத்துறை', default_role_ta: 'செயற்பொறியாளர் (PWD)', default_role_en: 'Executive Engineer (PWD)' },
+  { id: 'health',       name_ta: '🏥 மக்கள் நல்வாழ்வு & அரசு மருத்துவமனை (Health Dept)', default_role_ta: 'மருத்துவக் கல்லூரி முதல்வர் / இணை இயக்குநர்', default_role_en: 'Dean / Joint Director of Health' },
+  { id: 'education',    name_ta: '🎓 பள்ளி & உயர்கல்வித் துறை (Education Dept)', default_role_ta: 'முதன்மைக் கல்வி அலுவலர் (CEO)', default_role_en: 'Chief Educational Officer (CEO)' },
+  { id: 'tneb',         name_ta: '⚡ தமிழ்நாடு மின்சார வாரியம் (TANGEDCO)', default_role_ta: 'மேற்பார்வைப் பொறியாளர் (SE)', default_role_en: 'Superintending Engineer (TANGEDCO)' },
+  { id: 'agriculture',  name_ta: '🌾 வேளாண்மை & உழவர் நலத்துறை (Agriculture Dept)', default_role_ta: 'வேளாண்மை இணை இயக்குநர் (JD Agriculture)', default_role_en: 'Joint Director of Agriculture' },
+];
+
+const LAYOUT_OPTIONS = [
+  { id: 'classic',       name_ta: 'கழக பிரம்மாண்டம் (Party High-Impact)', icon: '🏳️' },
+  { id: 'mla_govt',      name_ta: 'சட்டமன்ற உறுப்பினர் / அரசு நடை (MLA & Govt Style)', icon: '🏛️' },
+  { id: 'press_release', name_ta: 'பத்திரிகை செய்தி அறிக்கை (Press Release)', icon: '📢' },
+  { id: 'minimal',       name_ta: 'நிர்வாக சுருக்கம் (Executive Minimal)', icon: '📄' },
 ];
 
 const Profiles = () => {
@@ -58,6 +59,7 @@ const Profiles = () => {
     profile_type: 'party_profile',
     party_id: '',
     party_role: 'மாவட்ட கழகச் செயலாளர்',
+    govt_dept: 'mla_mp',
     profile_name_en: '',
     profile_name_ta: '',
     designation_en: '',
@@ -87,6 +89,47 @@ const Profiles = () => {
 
   const handleInput = e => setForm(f => ({ ...f, [e.target.name]: e.target.value }));
 
+  // Switch profile type
+  const handleProfileTypeSwitch = (type) => {
+    if (type === 'govt_profile') {
+      setForm(f => ({
+        ...f,
+        profile_type: 'govt_profile',
+        party_id: '',
+        party_role: 'சட்டமன்ற உறுப்பினர் (MLA)',
+        designation_ta: 'சட்டமன்ற உறுப்பினர் (MLA)',
+        designation_en: 'Member of Legislative Assembly (MLA)',
+        layout_style: 'mla_govt',
+        address_ta: 'மாவட்ட ஆட்சியர் பெருந்திட்ட வளாகம் / சட்டமன்ற உறுப்பினர் அலுவலகம், ஈரோடு.',
+        address_en: 'MLA Office / Collectorate Master Plan Complex, Erode - 638011.'
+      }));
+    } else {
+      setForm(f => ({
+        ...f,
+        profile_type: 'party_profile',
+        party_role: 'மாவட்ட கழகச் செயலாளர்',
+        designation_ta: 'மாவட்ட கழகச் செயலாளர்',
+        designation_en: 'District Party Secretary',
+        layout_style: 'classic',
+        address_ta: 'கழக தலைமை அலுவலகம், மேட்டூர் ரோடு, ஈரோடு.',
+        address_en: 'Party District Office, Mettur Road, Erode - 638001.'
+      }));
+    }
+  };
+
+  // Switch govt department preset
+  const handleDeptSelect = (deptId) => {
+    const dept = GOVT_DEPARTMENTS.find(d => d.id === deptId);
+    if (!dept) return;
+    setForm(f => ({
+      ...f,
+      govt_dept: deptId,
+      party_role: dept.default_role_ta,
+      designation_ta: dept.default_role_ta,
+      designation_en: dept.default_role_en,
+    }));
+  };
+
   const submit = async (e) => {
     e.preventDefault();
     if (!form.profile_name_en.trim()) {
@@ -97,22 +140,6 @@ const Profiles = () => {
       await api.post('/profiles', form);
       toast.success(ta ? '✅ புதிய மடல் சுயவிவரம் உருவாக்கப்பட்டது!' : '✅ Letterhead profile created!');
       setShowModal(false);
-      setForm({
-        profile_type: 'party_profile',
-        party_id: '',
-        party_role: 'மாவட்ட கழகச் செயலாளர்',
-        profile_name_en: '',
-        profile_name_ta: '',
-        designation_en: '',
-        designation_ta: '',
-        constituency: 'ஈரோடு கிழக்கு (Erode East)',
-        address_en: '',
-        address_ta: '',
-        phone: '',
-        email: '',
-        website: '',
-        layout_style: 'classic',
-      });
       loadData();
     } catch (err) {
       toast.error(err.response?.data?.message || (ta ? 'உருவாக்கம் தோல்வி' : 'Creation failed'));
@@ -133,102 +160,84 @@ const Profiles = () => {
   };
 
   return (
-    <div className="min-h-screen bg-slate-50">
+    <div className="min-h-screen bg-slate-50 font-tamil">
       <Navbar />
       
       <div className="max-w-7xl mx-auto px-4 py-8">
         
-        {/* Security & Data Isolation Notice */}
-        <div className="bg-slate-900 border border-slate-800 rounded-2xl p-4 text-white mb-8 shadow-sm flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
-          <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-xl bg-emerald-500/20 border border-emerald-500/30 flex items-center justify-center text-emerald-400 flex-shrink-0">
-              <ShieldCheck size={22} />
-            </div>
-            <div>
-              <div className="font-bold text-sm font-tamil text-white flex items-center gap-2">
-                <span>கட்சித் தரவு தனிமைப்படுத்தல் உத்தரவாதம் (Tenant Data Isolation)</span>
-                <span className="bg-emerald-500/20 text-emerald-300 text-[10px] px-2 py-0.5 rounded-full border border-emerald-500/30">
-                  100% Encrypted
-                </span>
-              </div>
-              <p className="text-xs text-slate-400 font-tamil mt-0.5">
-                உங்கள் கட்சி (TVK, DMK, AIADMK, etc.) மற்றும் அரசு அலுவலர் சுயவிவரத் தரவுகளை பிறர் அணுக இயலாது. முழுமையான தனிப்பாதுகாப்பு உறுதி செய்யப்பட்டுள்ளது.
-              </p>
-            </div>
+        {/* Header Bar */}
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6">
+          <div>
+            <h1 className="text-2xl font-bold font-tamil text-slate-900 flex items-center gap-2">
+              <Building2 className="text-blue-600" />
+              <span>{ta ? 'அதிகாரப்பூர்வ மடல் சுயவிவரங்கள்' : 'Official Letterhead Profiles'}</span>
+            </h1>
+            <p className="text-xs text-slate-500 font-tamil mt-1">
+              அரசியல் கட்சிகள் மற்றும் அரசு அலுவலர்களுக்கான தனித்துவமான லெட்டர்பேட் வார்ப்புருக்கள்
+            </p>
           </div>
-          <button onClick={() => setShowModal(true)}
-            className="btn-primary flex items-center gap-2 font-tamil text-xs py-2.5 px-4 flex-shrink-0 shadow-lg">
-            <Plus size={16} /> {ta ? 'புதிய சுயவிவரம் சேர்' : 'New Profile'}
+
+          <button
+            onClick={() => setShowModal(true)}
+            className="btn-primary flex items-center gap-2 text-xs py-2.5 shadow-md self-start sm:self-auto"
+          >
+            <Plus size={16} />
+            <span>{ta ? '+ புதிய சுயவிவரம் சேர்' : '+ Add New Profile'}</span>
           </button>
         </div>
 
-        {/* Profiles Grid */}
-        <div className="flex items-center justify-between mb-6">
-          <div>
-            <h1 className="text-xl font-bold font-tamil text-slate-900">
-              🪪 {ta ? 'பதிவு செய்யப்பட்ட மடல் சுயவிவரங்கள்' : 'Registered Letterhead Profiles'}
-            </h1>
-            <p className="text-slate-500 font-tamil text-xs mt-0.5">
-              {profiles.length} {ta ? 'சுயவிவரங்கள் செயலில் உள்ளன' : 'profiles active'}
-            </p>
+        {/* Security & Data Isolation Notice */}
+        <div className="bg-gradient-to-r from-emerald-900 to-slate-900 text-white p-4 rounded-2xl shadow-sm mb-6 flex items-center gap-3 border border-emerald-700/50">
+          <div className="w-9 h-9 rounded-xl bg-emerald-500/20 text-emerald-400 flex items-center justify-center flex-shrink-0">
+            <Shield size={20} />
+          </div>
+          <div className="text-xs font-tamil">
+            <span className="font-bold text-emerald-300">100% கட்சி &amp; அரசுத் தரவு தனிமைப்படுத்தல்:</span> உங்கள் கட்சியின் உள்கடிதங்கள் மற்றும் சுயவிவரங்கள் பிற கட்சிகள் அல்லது வெளிநபர்கள் அணுக முடியாத வகையில் தனிப்பயன் குறியாக்கம் செய்யப்பட்டுள்ளன.
           </div>
         </div>
 
+        {/* Profiles Grid */}
         {loading ? (
-          <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {[...Array(3)].map((_, i) => (
-              <div key={i} className="bg-white rounded-2xl p-6 border border-slate-200 animate-pulse">
-                <div className="flex items-center gap-3 mb-4">
-                  <div className="w-12 h-12 bg-slate-200 rounded-full"></div>
-                  <div className="flex-1 space-y-2">
-                    <div className="h-4 bg-slate-200 rounded w-3/4"></div>
-                    <div className="h-3 bg-slate-100 rounded w-1/2"></div>
-                  </div>
-                </div>
-              </div>
+          <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4">
+            {[1, 2, 3].map(i => (
+              <div key={i} className="bg-white p-6 rounded-2xl border border-slate-200 animate-pulse h-48"></div>
             ))}
           </div>
         ) : profiles.length === 0 ? (
-          <div className="bg-white rounded-3xl p-12 text-center border border-slate-200 max-w-xl mx-auto shadow-sm">
-            <div className="w-16 h-16 rounded-full bg-blue-50 text-blue-600 flex items-center justify-center mx-auto mb-4 text-2xl">
+          <div className="bg-white rounded-3xl p-12 text-center border border-slate-200 shadow-sm max-w-lg mx-auto mt-8">
+            <div className="w-16 h-16 bg-blue-50 text-blue-600 rounded-2xl flex items-center justify-center mx-auto mb-4 text-2xl">
               🏛️
             </div>
-            <h3 className="text-lg font-bold text-slate-800 font-tamil mb-2">
-              {ta ? 'சுயவிவரங்கள் ஏதும் இல்லை' : 'No profiles created yet'}
+            <h3 className="font-bold font-tamil text-slate-900 text-base mb-1">
+              சுயவிவரங்கள் எதுவும் பதிவு செய்யப்படவில்லை
             </h3>
-            <p className="text-xs text-slate-500 font-tamil mb-6 leading-relaxed">
-              {ta ? 'உங்கள் கட்சிப் பதவி, தொகுதி (எ.கா: ஈரோடு கிழக்கு) அல்லது அரசுப் பதவிக்கான முதல் மடல் சுயவிவரத்தை உருவாக்குங்கள்.'
-                  : 'Create your first profile for party roles, constituencies (e.g. Erode East) or government offices.'}
+            <p className="text-xs text-slate-500 font-tamil mb-6">
+              முதலில் உங்கள் அரசியல் கட்சி அல்லது அரசு அலுவலகத்திற்கான மடல் சுயவிவரத்தை உருவாக்குங்கள்.
             </p>
-            <button onClick={() => setShowModal(true)} className="btn-primary font-tamil text-xs py-3 px-6">
-              <Plus size={16} className="inline mr-1.5" /> {ta ? 'முதல் சுயவிவரம் உருவாக்கு' : 'Create First Profile'}
+            <button onClick={() => setShowModal(true)} className="btn-primary text-xs py-3 px-6 shadow-md">
+              + முதல் சுயவிவரத்தை உருவாக்கவும்
             </button>
           </div>
         ) : (
-          <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
+          <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-5">
             {profiles.map(profile => (
-              <div key={profile.id}
-                className="bg-white rounded-2xl p-6 border-2 transition-all hover:shadow-lg flex flex-col justify-between"
-                style={{ borderColor: (profile.primary_color || '#0f172a') + '33' }}
-              >
+              <div key={profile.id} className="bg-white rounded-2xl p-5 border border-slate-200 shadow-xs hover:shadow-md transition-all flex flex-col justify-between">
                 <div>
-                  <div className="flex items-start gap-3.5 mb-4">
-                    <div className="w-12 h-12 rounded-full flex items-center justify-center text-white font-black text-sm flex-shrink-0 shadow-sm"
-                      style={{ background: profile.primary_color || '#0f172a' }}>
-                      {(profile.abbreviation || 'TN').substring(0, 3)}
+                  <div className="flex items-start gap-3 mb-3">
+                    <div className="w-12 h-12 rounded-xl flex items-center justify-center text-white font-bold text-sm shadow-xs flex-shrink-0"
+                      style={{ background: profile.party_color || (profile.profile_type === 'govt_profile' ? '#0f172a' : '#2563eb') }}>
+                      {profile.profile_type === 'govt_profile' ? '🏛️' : (profile.abbreviation || 'TN')}
                     </div>
                     <div className="min-w-0 flex-1">
                       <div className="font-bold font-tamil text-slate-900 text-sm truncate">
                         {profile.profile_name_ta || profile.profile_name_en}
                       </div>
                       <div className="text-xs text-blue-600 font-bold font-tamil truncate">
-                        {profile.party_role || profile.designation_en || 'பொறுப்பாளர்'}
+                        {profile.party_role || profile.designation_ta || profile.designation_en || 'பொறுப்பாளர்'}
                       </div>
-                      {profile.party_name_ta && (
-                        <div className="text-[11px] text-slate-500 font-tamil truncate mt-0.5">
-                          {profile.party_name_ta}
-                        </div>
-                      )}
+                      <div className="text-[10px] text-slate-500 font-tamil truncate mt-0.5">
+                        {profile.profile_type === 'govt_profile' ? '🏛️ தமிழ்நாடு அரசு / சட்டமன்றம்' : (profile.party_name_ta || 'அரசியல் பேரியக்கம்')}
+                      </div>
                     </div>
                   </div>
 
@@ -260,19 +269,24 @@ const Profiles = () => {
           </div>
         )}
 
-        {/* CREATE MODAL */}
+        {/* CREATE MODAL — DYNAMIC PARTY VS GOVERNMENT FORM */}
         {showModal && (
           <div className="fixed inset-0 z-50 flex items-center justify-center p-4" style={{ background: 'rgba(15, 23, 42, 0.6)' }}>
             <div className="bg-white rounded-3xl shadow-2xl w-full max-w-2xl max-h-[90vh] overflow-y-auto border border-slate-200">
               
+              {/* Modal Header */}
               <div className="bg-gradient-to-r from-slate-900 to-indigo-950 text-white p-6 rounded-t-3xl flex items-center justify-between">
                 <div>
                   <h2 className="text-base font-bold font-tamil flex items-center gap-2">
                     <Sparkles size={18} className="text-amber-400" />
-                    {ta ? 'புதிய மடல் சுயவிவரம் உருவாக்குதல்' : 'Create Letterhead Profile'}
+                    {form.profile_type === 'govt_profile'
+                      ? '🏛️ தமிழ்நாடு அரசு / சட்டமன்ற மடல் சுயவிவரம்'
+                      : '🏳️ அரசியல் கட்சி மடல் சுயவிவரம் உருவாக்குதல்'}
                   </h2>
                   <p className="text-xs text-indigo-300 font-tamil mt-0.5">
-                    ஈரோடு மற்றும் அனைத்து தமிழ்நாடு அரசியல்/அரசு அமைப்புகள்
+                    {form.profile_type === 'govt_profile'
+                      ? 'சட்டமன்ற உறுப்பினர்கள், மாவட்ட ஆட்சியர்கள் மற்றும் அரசுத் துறைகளுக்கான படிவம்'
+                      : 'ஈரோடு மற்றும் அனைத்து தமிழ்நாடு அரசியல் பேரியக்கங்களுக்கான படிவம்'}
                   </p>
                 </div>
                 <button onClick={() => setShowModal(false)} className="p-2 hover:bg-white/10 rounded-xl transition-colors">
@@ -282,33 +296,43 @@ const Profiles = () => {
 
               <form onSubmit={submit} className="p-6 space-y-4">
                 
-                {/* Profile Type */}
+                {/* 1. Profile Type Toggle */}
                 <div>
                   <label className="block text-xs font-bold text-slate-700 font-tamil mb-1.5">
-                    {ta ? 'சுயவிவர வகை' : 'Profile Type'}
+                    {ta ? 'சுயவிவர வகை தேர்வு (Choose Profile Category)' : 'Profile Category'}
                   </label>
                   <div className="grid grid-cols-2 gap-3">
-                    {[
-                      { val: 'party_profile', label: ta ? '🏳️ அரசியல் கட்சிப் பொறுப்பாளர்' : '🏳️ Political Party Role' },
-                      { val: 'govt_profile',  label: ta ? '🏛️ அரசு பிரதிநிதி / அலுவலர்' : '🏛️ Government Official' },
-                    ].map(opt => (
-                      <label key={opt.val}
-                        className={`p-3 border-2 rounded-xl cursor-pointer transition-all font-tamil text-xs text-center
-                          ${form.profile_type === opt.val ? 'border-blue-600 bg-blue-50 text-blue-900 font-bold' : 'border-slate-200 hover:border-slate-300'}`}>
-                        <input type="radio" name="profile_type" value={opt.val}
-                          checked={form.profile_type === opt.val}
-                          onChange={handleInput} className="sr-only" />
-                        {opt.label}
-                      </label>
-                    ))}
+                    <button
+                      type="button"
+                      onClick={() => handleProfileTypeSwitch('party_profile')}
+                      className={`p-3 border-2 rounded-xl transition-all font-tamil text-xs text-center flex items-center justify-center gap-2
+                        ${form.profile_type === 'party_profile'
+                          ? 'border-blue-600 bg-blue-50 text-blue-900 font-bold shadow-sm ring-1 ring-blue-600'
+                          : 'border-slate-200 hover:border-slate-300 text-slate-700'}`}
+                    >
+                      <span>🏳️</span>
+                      <span>அரசியல் கட்சிப் பொறுப்பாளர்</span>
+                    </button>
+
+                    <button
+                      type="button"
+                      onClick={() => handleProfileTypeSwitch('govt_profile')}
+                      className={`p-3 border-2 rounded-xl transition-all font-tamil text-xs text-center flex items-center justify-center gap-2
+                        ${form.profile_type === 'govt_profile'
+                          ? 'border-slate-900 bg-slate-900 text-white font-bold shadow-sm'
+                          : 'border-slate-200 hover:border-slate-300 text-slate-700'}`}
+                    >
+                      <span>🏛️</span>
+                      <span>அரசு பிரதிநிதி / அலுவலர்</span>
+                    </button>
                   </div>
                 </div>
 
-                {/* Party Selector */}
+                {/* 2A. POLITICAL PARTY SPECIFIC FIELDS */}
                 {form.profile_type === 'party_profile' && (
                   <div>
                     <label className="block text-xs font-bold text-slate-700 font-tamil mb-1.5">
-                      {ta ? 'அரசியல் கட்சி தேர்வு (Party Selection)' : 'Select Political Party'}
+                      {ta ? 'அரசியல் கட்சித் தேர்வு (Party Selection)' : 'Select Political Party'}
                     </label>
                     <select name="party_id" value={form.party_id} onChange={handleInput} className="input-field text-xs py-2.5">
                       <option value="">{ta ? 'கட்சியைத் தேர்ந்தெடுக்கவும்' : 'Select Party'}</option>
@@ -321,11 +345,30 @@ const Profiles = () => {
                   </div>
                 )}
 
-                {/* Constituency & Role */}
+                {/* 2B. GOVERNMENT OFFICIAL SPECIFIC FIELDS */}
+                {form.profile_type === 'govt_profile' && (
+                  <div className="bg-slate-50 p-3.5 rounded-2xl border border-slate-200 space-y-3">
+                    <label className="block text-xs font-bold text-slate-800 font-tamil flex items-center gap-1.5">
+                      <Award size={14} className="text-blue-600" />
+                      <span>அரசு நிர்வாக வகை / துறை (Govt Category &amp; Department)</span>
+                    </label>
+                    <select
+                      value={form.govt_dept}
+                      onChange={e => handleDeptSelect(e.target.value)}
+                      className="input-field text-xs py-2.5 bg-white font-bold"
+                    >
+                      {GOVT_DEPARTMENTS.map(dept => (
+                        <option key={dept.id} value={dept.id}>{dept.name_ta}</option>
+                      ))}
+                    </select>
+                  </div>
+                )}
+
+                {/* 3. Constituency & Role / Designation */}
                 <div className="grid sm:grid-cols-2 gap-3">
                   <div>
                     <label className="block text-xs font-bold text-slate-700 font-tamil mb-1.5">
-                      {ta ? 'தொகுதி (Constituency)' : 'Constituency'}
+                      {form.profile_type === 'govt_profile' ? 'சட்டமன்றத் தொகுதி / மாவட்டம்' : 'கழகத் தொகுதி / மாவட்டம்'}
                     </label>
                     <select name="constituency" value={form.constituency} onChange={handleInput} className="input-field text-xs py-2.5">
                       {ERODE_CONSTITUENCIES.map(c => (
@@ -335,100 +378,111 @@ const Profiles = () => {
                   </div>
                   <div>
                     <label className="block text-xs font-bold text-slate-700 font-tamil mb-1.5">
-                      {ta ? 'பொறுப்பு / பதவி (Role / Designation)' : 'Role / Designation'}
+                      {form.profile_type === 'govt_profile'
+                        ? 'அதிகாரப்பூர்வ அரசுப் பதவி (Govt Designation)'
+                        : 'கழகப் பொறுப்பு (Party Role)'}
                     </label>
                     <input
                       name="party_role"
                       value={form.party_role}
                       onChange={handleInput}
-                      className="input-field text-xs py-2.5 font-tamil font-semibold"
-                      placeholder="எ.கா: மாவட்ட கழகச் செயலாளர்"
+                      className="input-field text-xs py-2.5 font-tamil font-bold"
+                      placeholder={form.profile_type === 'govt_profile'
+                        ? 'எ.கா: சட்டமன்ற உறுப்பினர் (MLA) / மாவட்ட ஆட்சியர் (IAS)'
+                        : 'எ.கா: மாவட்ட கழகச் செயலாளர்'}
                     />
                   </div>
                 </div>
 
-                {/* Name */}
+                {/* 4. Name in Tamil & English */}
                 <div className="grid sm:grid-cols-2 gap-3">
                   <div>
                     <label className="block text-xs font-bold text-slate-700 font-tamil mb-1.5">
                       {ta ? 'பெயர் தமிழில் (Name in Tamil)' : 'Name in Tamil'}
                     </label>
                     <input name="profile_name_ta" value={form.profile_name_ta} onChange={handleInput}
-                      className="input-field text-xs py-2.5 font-tamil font-bold" placeholder="உங்கள் பெயர் தமிழில்" />
+                      className="input-field text-xs py-2.5 font-tamil font-bold"
+                      placeholder={form.profile_type === 'govt_profile' ? 'எ.கா: மாண்புமிகு இரா. நித்யானந்தன், MLA' : 'உங்கள் பெயர் தமிழில்'} />
                   </div>
                   <div>
                     <label className="block text-xs font-bold text-slate-700 font-tamil mb-1.5">
                       {ta ? 'பெயர் ஆங்கிலத்தில் (Name in English) *' : 'Name in English *'}
                     </label>
                     <input name="profile_name_en" value={form.profile_name_en} onChange={handleInput}
-                      className="input-field text-xs py-2.5 font-bold" placeholder="Name in English" required />
+                      className="input-field text-xs py-2.5 font-bold"
+                      placeholder={form.profile_type === 'govt_profile' ? 'E.g.: Hon. R. Nithyananthan, MLA' : 'Name in English'} required />
                   </div>
                 </div>
 
-                {/* Address */}
+                {/* 5. Office Address */}
                 <div className="grid sm:grid-cols-2 gap-3">
                   <div>
                     <label className="block text-xs font-bold text-slate-700 font-tamil mb-1.5">
-                      {ta ? 'அலுவலக முகவரி (தமிழ்)' : 'Office Address (Tamil)'}
+                      {form.profile_type === 'govt_profile' ? 'அரசு அலுவலக முகவரி (தமிழ்)' : 'கழக அலுவலக முகவரி (தமிழ்)'}
                     </label>
                     <textarea name="address_ta" value={form.address_ta} onChange={handleInput}
                       rows={2} className="input-field text-xs font-tamil"
-                      placeholder="எ.கா: கழக தலைமை அலுவலகம், மேட்டூர் ரோடு, ஈரோடு." />
+                      placeholder={form.profile_type === 'govt_profile'
+                        ? 'எ.கா: சட்டமன்ற உறுப்பினர் அலுவலகம், ஈரோடு கிழக்கு.'
+                        : 'எ.கா: கழக தலைமை அலுவலகம், மேட்டூர் ரோடு, ஈரோடு.'} />
                   </div>
                   <div>
                     <label className="block text-xs font-bold text-slate-700 font-tamil mb-1.5">
-                      {ta ? 'அலுவலக முகவரி (English)' : 'Office Address (English)'}
+                      {form.profile_type === 'govt_profile' ? 'அரசு அலுவலக முகவரி (English)' : 'கழக அலுவலக முகவரி (English)'}
                     </label>
                     <textarea name="address_en" value={form.address_en} onChange={handleInput}
                       rows={2} className="input-field text-xs"
-                      placeholder="Party Office, Mettur Road, Erode - 638001." />
+                      placeholder={form.profile_type === 'govt_profile'
+                        ? 'MLA Office, Master Plan Complex, Erode - 638011.'
+                        : 'Party Office, Mettur Road, Erode - 638001.'} />
                   </div>
                 </div>
 
-                {/* Contacts */}
+                {/* 6. Contact Details */}
                 <div className="grid sm:grid-cols-3 gap-3">
                   <div>
                     <label className="block text-xs font-bold text-slate-700 font-tamil mb-1.5">
                       {ta ? 'தொலைபேசி எண்' : 'Phone'}
                     </label>
                     <input name="phone" value={form.phone} onChange={handleInput}
-                      className="input-field text-xs py-2" placeholder="9876543210" />
+                      className="input-field text-xs py-2" placeholder="0424-2223344" />
                   </div>
                   <div>
                     <label className="block text-xs font-bold text-slate-700 font-tamil mb-1.5">
-                      {ta ? 'மின்னஞ்சல்' : 'Email'}
+                      {ta ? 'அதிகாரப்பூர்வ மின்னஞ்சல்' : 'Official Email'}
                     </label>
                     <input name="email" value={form.email} onChange={handleInput}
-                      type="email" className="input-field text-xs py-2" placeholder="office@party.tn" />
+                      type="email" className="input-field text-xs py-2" placeholder={form.profile_type === 'govt_profile' ? 'mla.erode@tn.gov.in' : 'office@party.tn'} />
                   </div>
                   <div>
                     <label className="block text-xs font-bold text-slate-700 font-tamil mb-1.5">
                       {ta ? 'வலைதளம்' : 'Website'}
                     </label>
                     <input name="website" value={form.website} onChange={handleInput}
-                      className="input-field text-xs py-2" placeholder="www.party.in" />
+                      className="input-field text-xs py-2" placeholder={form.profile_type === 'govt_profile' ? 'www.tn.gov.in' : 'www.party.in'} />
                   </div>
                 </div>
 
-                {/* Layout Style */}
+                {/* 7. Default Template Layout */}
                 <div>
                   <label className="block text-xs font-bold text-slate-700 font-tamil mb-1.5">
-                    {ta ? 'இயல்புநிலை மடல் பாணி (Default Template Layout)' : 'Default Layout Style'}
+                    {ta ? 'இயல்புநிலை மடல் பாணி (Default Letterhead Style)' : 'Default Layout Style'}
                   </label>
                   <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
                     {LAYOUT_OPTIONS.map(l => (
                       <label key={l.id}
                         className={`p-2.5 border-2 rounded-xl cursor-pointer text-center text-xs font-tamil transition-all flex flex-col items-center gap-1
-                          ${form.layout_style === l.id ? 'border-blue-600 bg-blue-50 text-blue-900 font-bold' : 'border-slate-200 hover:border-slate-300'}`}>
+                          ${form.layout_style === l.id ? 'border-blue-600 bg-blue-50 text-blue-900 font-bold shadow-xs ring-1 ring-blue-600' : 'border-slate-200 hover:border-slate-300'}`}>
                         <input type="radio" name="layout_style" value={l.id}
                           checked={form.layout_style === l.id} onChange={handleInput} className="sr-only" />
-                        <span>{l.icon}</span>
+                        <span className="text-base">{l.icon}</span>
                         <span className="text-[10px] leading-tight">{l.name_ta}</span>
                       </label>
                     ))}
                   </div>
                 </div>
 
+                {/* Submit Buttons */}
                 <div className="flex gap-3 pt-3 border-t border-slate-100">
                   <button type="button" onClick={() => setShowModal(false)} className="btn-secondary flex-1 font-tamil text-xs py-3">
                     {ta ? 'ரத்து செய்' : 'Cancel'}
