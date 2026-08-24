@@ -1,5 +1,4 @@
-// src/components/Navbar.jsx — Full Width Edge-to-Edge Optimized Navbar
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { useAuth } from '../context/AuthContext';
@@ -13,12 +12,16 @@ import i18n from '../i18n/index.js';
 import Logo from './Logo';
 
 const Navbar = () => {
-  const { t }            = useTranslation();
-  const { user, logout } = useAuth();
-  const location         = useLocation();
-  const navigate         = useNavigate();
-  const [menuOpen, setMenuOpen] = useState(false);
-  const [lang, setLang]         = useState(localStorage.getItem('lang') || 'ta');
+  const { t }                         = useTranslation();
+  const { user, logout, refreshUser } = useAuth();
+  const location                      = useLocation();
+  const navigate                      = useNavigate();
+  const [menuOpen, setMenuOpen]       = useState(false);
+  const [lang, setLang]               = useState(localStorage.getItem('lang') || 'ta');
+
+  useEffect(() => {
+    if (refreshUser) refreshUser();
+  }, []);
 
   const toggleLang = () => {
     const next = lang === 'ta' ? 'en' : 'ta';

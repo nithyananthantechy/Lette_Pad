@@ -8,14 +8,32 @@ export const AuthProvider = ({ children }) => {
   const [user, setUser]       = useState(null);
   const [loading, setLoading] = useState(true);
 
+  const refreshUser = async () => {
+    const token = localStorage.getItem('accessToken');
+    if (!token) return null;
+    try {
+      const res = await api.get('/auth/me');
+      if (res.data?.user) {
+        setUser(res.data.user);
+        return res.data.user;
+      }
+    } catch {
+      // ignore
+    }
+    return null;
+  };
+
   useEffect(() => {
     const token = localStorage.getItem('accessToken');
     if (token) {
       api.get('/auth/me')
-        .then(res => setUser(res.data.user))
+        .then(res => {
+          if (res.data?.user) setUser(res.data.user);
+        })
         .catch(() => {
           localStorage.removeItem('accessToken');
           localStorage.removeItem('refreshToken');
+          setUser(null);
         })
         .finally(() => setLoading(false));
     } else {
@@ -36,7 +54,7 @@ export const AuthProvider = ({ children }) => {
   };
 
   return (
-    <AuthContext.Provider value={{ user, loading, login, logout }}>
+    <AuthContext.Provider value={{ user, loading, login, logout, refreshUser }}>
       {children}
     </AuthContext.Provider>
   );

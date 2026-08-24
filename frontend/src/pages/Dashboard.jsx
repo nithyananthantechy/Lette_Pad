@@ -24,7 +24,7 @@ const statusLabel = (status, ta) => {
 
 const Dashboard = () => {
   const { t, i18n } = useTranslation();
-  const { user } = useAuth();
+  const { user, refreshUser } = useAuth();
   const ta = i18n.language === 'ta';
 
   const [letters, setLetters]   = useState([]);
@@ -33,6 +33,7 @@ const Dashboard = () => {
   const [loading, setLoading]   = useState(true);
 
   useEffect(() => {
+    if (refreshUser) refreshUser();
     const load = async () => {
       try {
         const [lRes, pRes, sRes] = await Promise.all([
