@@ -352,7 +352,8 @@ router.post('/reset-password', [
 router.get('/me', authenticateToken, async (req, res) => {
   try {
     const result = await db.query(
-      `SELECT id, full_name, email, phone, role, is_verified, avatar_url, created_at
+      `SELECT id, full_name, email, phone, role, is_verified, is_active, avatar_url,
+              subscription_status, subscription_plan, subscription_ends_at, trial_ends_at, created_at
        FROM users WHERE id = $1`,
       [req.user.id]
     );
