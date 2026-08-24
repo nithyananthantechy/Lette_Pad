@@ -61,6 +61,12 @@ const Navbar = () => {
       icon: <ClipboardList size={15} />,
       label: lang === 'ta' ? 'தணிக்கை பதிவு' : 'Audit Log',
     },
+    ...(user?.role === 'super_admin' ? [{
+      to: '/admin',
+      icon: <span className="text-amber-400 text-xs">👑</span>,
+      label: lang === 'ta' ? 'முதன்மை நிர்வாகம்' : 'Admin Panel',
+      badge: 'ADMIN',
+    }] : []),
   ] : [
     {
       to: '/#features',
@@ -175,7 +181,7 @@ const Navbar = () => {
                       {user.full_name}
                     </div>
                     <div className="text-[10px] text-blue-400 font-tamil truncate leading-tight">
-                      {user.role === 'party_admin' ? 'நிர்வாகி' : user.role === 'govt_official' ? 'அரசு அலுவலர்' : 'உறுப்பினர்'}
+                      {user.role === 'super_admin' ? '👑 முதன்மை நிர்வாகி' : user.role === 'party_admin' ? 'நிர்வாகி' : user.role === 'govt_official' ? 'அரசு அலுவலர்' : 'உறுப்பினர்'}
                     </div>
                   </div>
                 </Link>

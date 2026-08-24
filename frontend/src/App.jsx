@@ -16,6 +16,7 @@ import Verify         from './pages/Verify';
 import Intelligence   from './pages/Intelligence';
 import Settings       from './pages/Settings';
 import Subscription   from './pages/Subscription';
+import Admin          from './pages/Admin';
 import NotFound       from './pages/NotFound';
 
 // Protected route wrapper
@@ -58,6 +59,7 @@ const App = () => (
     <Route path="/settings"        element={<ProtectedRoute><Settings /></ProtectedRoute>} />
     <Route path="/subscription"    element={<ProtectedRoute><Subscription /></ProtectedRoute>} />
     <Route path="/payment"         element={<ProtectedRoute><Subscription /></ProtectedRoute>} />
+    <Route path="/admin"           element={<ProtectedRoute><Admin /></ProtectedRoute>} />
     <Route path="/audit"           element={<ProtectedRoute><AuditLog /></ProtectedRoute>} />
 
     {/* 404 */}
