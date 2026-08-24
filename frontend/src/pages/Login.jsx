@@ -7,6 +7,7 @@ import toast from 'react-hot-toast';
 import { Mail, Lock, Eye, EyeOff, ArrowRight, Shield } from 'lucide-react';
 import api from '../lib/api';
 import { useAuth } from '../context/AuthContext';
+import Logo from '../components/Logo';
 
 const Login = () => {
   const { t, i18n } = useTranslation();
@@ -55,10 +56,10 @@ const Login = () => {
     <div className="min-h-screen bg-gradient-to-br from-[#1a1a2e] via-[#16213e] to-[#0f3460] flex items-center justify-center p-4">
       <div className="w-full max-w-md">
         {/* Logo */}
-        <div className="text-center mb-8">
-          <div className="text-5xl mb-3">🏛️</div>
-          <h1 className="text-2xl font-bold text-white font-tamil">AI Letter Pad</h1>
-          <p className="text-blue-300 text-sm font-tamil mt-1">தமிழ்நாடு அரசியல் & அரசு தளம்</p>
+        <div className="text-center mb-6">
+          <Link to="/" className="inline-block">
+            <Logo size="lg" className="justify-center" />
+          </Link>
         </div>
 
         <div className="bg-white rounded-3xl shadow-2xl overflow-hidden">

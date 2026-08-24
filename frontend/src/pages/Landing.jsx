@@ -107,7 +107,7 @@ const Landing = () => {
           <div className="inline-flex items-center gap-2 bg-gradient-to-r from-blue-600/30 to-indigo-600/30 border border-blue-400/40 backdrop-blur px-4 py-2 rounded-full text-xs mb-6 shadow-inner">
             <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span>
             <span className="text-blue-200 font-semibold">
-              🏛️ தமிழ்நாடு &amp; ஈரோடு மண்டல அதிகாரப்பூர்வ AI மடல் தளம்
+              🏛️ LeadPad AI (மடலகம் AI) — அரசியல் &amp; மக்கள் பிரதிநிதிகளுக்கான AI தளம்
             </span>
           </div>
 

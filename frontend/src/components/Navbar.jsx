@@ -75,11 +75,11 @@ const Navbar = () => {
         <div className="flex items-center gap-2">
           <span className="flex items-center gap-1 text-emerald-400 font-medium">
             <ShieldCheck size={13} />
-            <span className="hidden sm:inline">100% பாதுகாப்பான குறியாக்கம்</span>
+            <span className="hidden sm:inline">100% பாதுகாப்பான தரவு குறியாக்கம்</span>
             <span className="sm:hidden">பாதுகாப்பானது</span>
           </span>
           <span className="text-slate-600 hidden sm:inline">&bull;</span>
-          <span className="text-slate-400 hidden md:inline">தமிழ்நாடு அதிகாரப்பூர்வ மடல் &amp; பேச்சு தயாரிப்பு தளம்</span>
+          <span className="text-slate-400 hidden md:inline">அரசியல் கட்சிகள் &amp; மக்கள் பிரதிநிதிகளுக்கான AI மடல் தளம்</span>
         </div>
 
         <div className="flex items-center gap-2">
