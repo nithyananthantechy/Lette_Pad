@@ -1,11 +1,12 @@
-// src/pages/Letters.jsx — Letters Management with Print, View, Edit, Revoke & Delete
+// src/pages/Letters.jsx — Enterprise Letters Management (View, Print, Edit, Finalize, Send & Delete)
 import { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import {
   Plus, Download, XCircle, FileText, Eye, AlertTriangle,
   Trash2, Printer, ExternalLink, RefreshCw, CheckCircle2,
-  ShieldCheck, Edit3
+  ShieldCheck, Edit3, Send, Mail, MessageSquare, Share2,
+  Check, X
 } from 'lucide-react';
 import Navbar from '../components/Navbar';
 import api from '../lib/api';
@@ -28,13 +29,19 @@ const Letters = () => {
   const navigate = useNavigate();
   const ta = i18n.language === 'ta';
 
-  const [letters, setLetters]       = useState([]);
-  const [loading, setLoading]       = useState(true);
-  const [filter, setFilter]         = useState('all');
-  const [revokeModal, setRevokeModal] = useState(null);
+  const [letters, setLetters]           = useState([]);
+  const [loading, setLoading]           = useState(true);
+  const [filter, setFilter]             = useState('all');
+  
+  // Modals
+  const [revokeModal, setRevokeModal]   = useState(null);
   const [revokeReason, setRevokeReason] = useState('');
-  const [revoking, setRevoking]     = useState(false);
-  const [actionLoading, setActionLoading] = useState(false);
+  const [revoking, setRevoking]         = useState(false);
+
+  const [sendModal, setSendModal]       = useState(null);
+  const [sendEmail, setSendEmail]       = useState('');
+  const [customMsg, setCustomMsg]       = useState('');
+  const [sendingEmail, setSendingEmail] = useState(false);
 
   const loadLetters = async () => {
     setLoading(true);
@@ -73,9 +80,54 @@ const Letters = () => {
     }
   };
 
+  // Finalize letter
+  const finalizeLetter = async (letter) => {
+    try {
+      await api.post(`/letters/${letter.id}/finalize`);
+      toast.success(ta ? '✅ கடிதம் அதிகாரப்பூர்வமாக இறுதியாக்கப்பட்டது!' : '✅ Letter finalized successfully!');
+      loadLetters();
+    } catch {
+      toast.error(ta ? 'இறுதியாக்குவதில் பிழை' : 'Failed to finalize letter');
+    }
+  };
+
+  // Send Email Dispatch
+  const handleSendEmail = async (e) => {
+    e.preventDefault();
+    if (!sendEmail.trim()) return toast.error(ta ? 'மின்னஞ்சல் முகவரி தேவை' : 'Email required');
+    setSendingEmail(true);
+    try {
+      const res = await api.post(`/letters/${sendModal.id}/send-email`, {
+        recipientEmail: sendEmail,
+        customMessage: customMsg,
+      });
+      toast.success(res.data.message || (ta ? '✉️ மடல் வெற்றிகரமாக அனுப்பப்பட்டது!' : 'Dispatched!'));
+      setSendModal(null);
+      setSendEmail('');
+      setCustomMsg('');
+      loadLetters();
+    } catch (err) {
+      toast.error(err.response?.data?.message || (ta ? 'அனுப்புவதில் பிழை' : 'Failed to send email'));
+    } finally {
+      setSendingEmail(false);
+    }
+  };
+
+  // Send via WhatsApp
+  const handleShareWhatsApp = (letter) => {
+    const verifyLink = `${window.location.origin}/verify/${letter.document_id}`;
+    const text = `🏛️ *தமிழ்நாடு அதிகாரப்பூர்வ மடல் அறிவிப்பு*\n\n` +
+      `*ஆவண எண்:* ${letter.document_id}\n` +
+      `*வழங்கியவர்:* ${letter.profile_name_ta || 'நிர்வாகி'}\n` +
+      `*பொருள்:* ${letter.subject_ta || letter.subject_en || 'அதிகாரப்பூர்வ கடிதம்'}\n\n` +
+      `🔍 *ஆவணத்தை சரிபார்க்க & படிக்க:* ${verifyLink}`;
+    
+    window.open(`https://api.whatsapp.com/send?text=${encodeURIComponent(text)}`, '_blank');
+  };
+
   // Delete letter
   const deleteLetter = async (letter) => {
-    if (!confirm(ta ? `"${letter.document_id}" கடிதத்தை நீக்க விரும்புகிறீர்களா?` : `Delete letter ${letter.document_id}?`)) return;
+    if (!confirm(ta ? `"${letter.document_id}" கடிதத்தை நிரந்தரமாக நீக்க விரும்புகிறீர்களா?` : `Delete letter ${letter.document_id}?`)) return;
     try {
       await api.delete(`/letters/${letter.id}`);
       toast.success(ta ? 'கடிதம் வெற்றிகரமாக நீக்கப்பட்டது!' : 'Letter deleted successfully!');
@@ -110,7 +162,7 @@ const Letters = () => {
   ];
 
   return (
-    <div className="min-h-screen bg-slate-50 font-tamil pb-12">
+    <div className="min-h-screen bg-slate-50 font-tamil pb-16">
       <Navbar />
 
       <div className="max-w-7xl mx-auto px-4 py-8">
@@ -123,7 +175,7 @@ const Letters = () => {
               <span>{ta ? 'என் கடிதங்கள் (My Letters)' : 'My Letters'}</span>
             </h1>
             <p className="text-xs text-slate-500 font-tamil mt-1">
-              தயாரிக்கப்பட்ட அதிகாரப்பூர்வ மடல்கள், வரைவுகள் மற்றும் சரிபார்ப்பு ஆவணங்கள்
+              தயாரிக்கப்பட்ட அதிகாரப்பூர்வ மடல்கள், வரைவுகள், மின்னஞ்சல் அனுப்புதல் மற்றும் சரிபார்ப்பு
             </p>
           </div>
 
@@ -238,43 +290,74 @@ const Letters = () => {
                           {/* 1. View / Print Button */}
                           <button
                             onClick={() => exportPDF(letter)}
-                            className="p-2 text-slate-600 hover:text-blue-600 hover:bg-blue-50 border border-slate-200 rounded-lg transition-colors flex items-center gap-1 font-bold text-xs"
+                            className="p-1.5 text-slate-700 hover:text-blue-600 hover:bg-blue-50 border border-slate-200 rounded-lg transition-colors flex items-center gap-1 font-bold text-xs shadow-2xs"
                             title={ta ? 'மடல் காண் / அச்சிடு' : 'View / Print Letter'}
                           >
-                            <Printer size={15} className="text-blue-600" />
+                            <Printer size={14} className="text-blue-600" />
                             <span>{ta ? 'காண் / அச்சிடு' : 'Print'}</span>
                           </button>
 
-                          {/* 2. QR Verify Link */}
+                          {/* 2. Edit Button */}
+                          <button
+                            onClick={() => navigate(`/letters/${letter.id}/edit`)}
+                            className="p-1.5 text-slate-700 hover:text-indigo-600 hover:bg-indigo-50 border border-slate-200 rounded-lg transition-colors flex items-center gap-1 font-bold text-xs shadow-2xs"
+                            title={ta ? 'திருத்து' : 'Edit Letter'}
+                          >
+                            <Edit3 size={14} className="text-indigo-600" />
+                            <span>{ta ? 'திருத்து' : 'Edit'}</span>
+                          </button>
+
+                          {/* 3. Finalize Button (If draft) */}
+                          {letter.status === 'draft' && (
+                            <button
+                              onClick={() => finalizeLetter(letter)}
+                              className="p-1.5 text-emerald-700 bg-emerald-50 hover:bg-emerald-100 border border-emerald-200 rounded-lg transition-colors flex items-center gap-1 font-bold text-xs shadow-2xs"
+                              title={ta ? 'அதிகாரப்பூர்வமாக இறுதியாக்கு' : 'Finalize Letter'}
+                            >
+                              <CheckCircle2 size={14} />
+                              <span>{ta ? 'இறுதியாக்கு' : 'Finalize'}</span>
+                            </button>
+                          )}
+
+                          {/* 4. Send / Dispatch Button */}
+                          <button
+                            onClick={() => setSendModal(letter)}
+                            className="p-1.5 text-blue-700 bg-blue-50 hover:bg-blue-100 border border-blue-200 rounded-lg transition-colors flex items-center gap-1 font-bold text-xs shadow-2xs"
+                            title={ta ? 'மின்னஞ்சல் / வாட்ஸ்அப் வழியாக அனுப்பு' : 'Send / Dispatch'}
+                          >
+                            <Send size={14} />
+                            <span>{ta ? 'அனுப்பு' : 'Send'}</span>
+                          </button>
+
+                          {/* 5. QR Verify Link */}
                           <a
                             href={`/verify/${letter.document_id}`}
                             target="_blank"
                             rel="noopener noreferrer"
-                            className="p-2 text-slate-600 hover:text-emerald-600 hover:bg-emerald-50 border border-slate-200 rounded-lg transition-colors flex items-center gap-1 font-semibold text-xs"
+                            className="p-1.5 text-slate-600 hover:text-emerald-600 hover:bg-emerald-50 border border-slate-200 rounded-lg transition-colors flex items-center gap-1 font-semibold text-xs"
                             title={ta ? 'QR சரிபார்ப்பு' : 'Verify'}
                           >
-                            <ShieldCheck size={15} className="text-emerald-600" />
-                            <span>{ta ? 'சரிபார்' : 'Verify'}</span>
+                            <ShieldCheck size={14} className="text-emerald-600" />
                           </a>
 
-                          {/* 3. Revoke Button */}
-                          {letter.status !== 'revoked' && (
+                          {/* 6. Revoke Button (If finalized) */}
+                          {letter.status === 'finalized' && (
                             <button
                               onClick={() => { setRevokeModal(letter); setRevokeReason(''); }}
-                              className="p-2 text-slate-400 hover:text-amber-600 hover:bg-amber-50 rounded-lg transition-colors"
+                              className="p-1.5 text-slate-400 hover:text-amber-600 hover:bg-amber-50 rounded-lg transition-colors"
                               title={ta ? 'திரும்பப்பெறு' : 'Revoke'}
                             >
-                              <XCircle size={16} />
+                              <XCircle size={15} />
                             </button>
                           )}
 
-                          {/* 4. Delete Button */}
+                          {/* 7. Delete Button */}
                           <button
                             onClick={() => deleteLetter(letter)}
-                            className="p-2 text-slate-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors"
+                            className="p-1.5 text-slate-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors"
                             title={ta ? 'நீக்கு' : 'Delete'}
                           >
-                            <Trash2 size={16} />
+                            <Trash2 size={15} />
                           </button>
 
                         </div>
@@ -288,6 +371,98 @@ const Letters = () => {
         </div>
 
       </div>
+
+      {/* SEND / DISPATCH MODAL */}
+      {sendModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4" style={{ background: 'rgba(15, 23, 42, 0.6)' }}>
+          <div className="bg-white rounded-3xl shadow-2xl w-full max-w-lg p-6 border border-slate-200 font-tamil">
+            
+            <div className="flex items-center justify-between pb-3 border-b border-slate-100 mb-4">
+              <div className="flex items-center gap-2.5">
+                <div className="w-9 h-9 rounded-xl bg-blue-500/10 text-blue-600 flex items-center justify-center">
+                  <Send size={18} />
+                </div>
+                <div>
+                  <h3 className="text-base font-bold text-slate-900">
+                    {ta ? 'அதிகாரப்பூர்வ மடல் அனுப்புதல்' : 'Dispatch Official Letter'}
+                  </h3>
+                  <p className="text-xs text-slate-500 font-mono">{sendModal.document_id}</p>
+                </div>
+              </div>
+              <button onClick={() => setSendModal(null)} className="p-1.5 hover:bg-slate-100 rounded-lg">
+                <X size={18} />
+              </button>
+            </div>
+
+            {/* Quick WhatsApp Share Banner */}
+            <div className="bg-emerald-50 border border-emerald-200 p-3.5 rounded-2xl mb-4 flex items-center justify-between gap-3">
+              <div>
+                <div className="text-xs font-bold text-emerald-900 flex items-center gap-1.5">
+                  <MessageSquare size={14} className="text-emerald-600" />
+                  <span>வாட்ஸ்அப் வழியாக உடனடியாக பகிர</span>
+                </div>
+                <div className="text-[11px] text-emerald-700 mt-0.5">
+                  சரிபார்ப்பு இணைப்பு மற்றும் சுருக்கத்துடன் அனுப்பவும்
+                </div>
+              </div>
+              <button
+                type="button"
+                onClick={() => handleShareWhatsApp(sendModal)}
+                className="px-3 py-1.5 bg-emerald-600 hover:bg-emerald-500 text-white rounded-xl text-xs font-bold transition-all shadow-xs flex items-center gap-1 flex-shrink-0"
+              >
+                <span>WhatsApp</span>
+                <Share2 size={12} />
+              </button>
+            </div>
+
+            {/* Email Dispatch Form */}
+            <form onSubmit={handleSendEmail} className="space-y-3.5">
+              <div>
+                <label className="block text-xs font-bold text-slate-700 mb-1 flex items-center gap-1">
+                  <Mail size={13} className="text-blue-600" />
+                  <span>பெறுநரின் மின்னஞ்சல் முகவரி (Recipient Email) *</span>
+                </label>
+                <input
+                  type="email"
+                  required
+                  value={sendEmail}
+                  onChange={e => setSendEmail(e.target.value)}
+                  placeholder="எ.கா: collector.erode@tn.gov.in அல்லது cadre@party.tn"
+                  className="input-field text-xs py-2.5"
+                />
+              </div>
+
+              <div>
+                <label className="block text-xs font-bold text-slate-700 mb-1">
+                  கூடுதல் செய்தி / குறிப்பு (Optional Message)
+                </label>
+                <textarea
+                  rows={2}
+                  value={customMsg}
+                  onChange={e => setCustomMsg(e.target.value)}
+                  placeholder="எ.கா: மாண்புமிகு ஆட்சியர் அவர்களின் கனிவான பார்வைக்கு அனுப்பி வைக்கப்படுகிறது..."
+                  className="input-field text-xs py-2 font-tamil"
+                />
+              </div>
+
+              <div className="flex gap-2.5 pt-2">
+                <button type="button" onClick={() => setSendModal(null)} className="btn-secondary flex-1 text-xs py-2.5">
+                  {ta ? 'ரத்து செய்' : 'Cancel'}
+                </button>
+                <button
+                  type="submit"
+                  disabled={sendingEmail}
+                  className="btn-primary flex-1 text-xs py-2.5 flex items-center justify-center gap-1.5"
+                >
+                  {sendingEmail ? <RefreshCw size={14} className="animate-spin" /> : <Send size={14} />}
+                  <span>{ta ? 'மின்னஞ்சல் அனுப்பு' : 'Send Dispatch Email'}</span>
+                </button>
+              </div>
+            </form>
+
+          </div>
+        </div>
+      )}
 
       {/* Revoke Modal */}
       {revokeModal && (

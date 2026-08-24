@@ -101,7 +101,24 @@ const LetterDesigner = () => {
         if (list[0].constituency) setConstituency(list[0].constituency);
       }
     }).catch(() => toast.error(ta ? 'சுயவிவரங்கள் ஏற்றுவதில் பிழை' : 'Failed to load profiles'));
-  }, []);
+
+    // If edit mode (:id exists)
+    if (id) {
+      api.get(`/letters/${id}`).then(r => {
+        const l = r.data.letter;
+        if (l) {
+          setLetterId(l.id);
+          setSubject(l.subject_ta || l.subject_en || '');
+          setBody(l.body_ta || l.body_en || '');
+          setRecipient(l.recipient_name || '');
+          setRecipientAddr(l.recipient_address || '');
+          if (l.language) setLetterLang(l.language);
+          if (l.layout_style) setLayoutStyle(l.layout_style);
+          toast.success(ta ? '📝 கடிதம் திருத்துவதற்காக திறக்கப்பட்டது' : '📝 Letter loaded for editing');
+        }
+      }).catch(() => {});
+    }
+  }, [id]);
 
   // Update dispatch reference on profile selection
   useEffect(() => {
@@ -200,10 +217,18 @@ const LetterDesigner = () => {
         recipient_address: recipientAddr,
         language: letterLang,
       };
-      const res = await api.post('/letters', payload);
-      setLetterId(res.data.letter.id);
-      toast.success(ta ? '💾 வரைவு பாதுகாப்பாக சேமிக்கப்பட்டது' : '💾 Draft saved securely');
-      return res.data.letter.id;
+
+      let currentId = letterId;
+      if (currentId) {
+        await api.put(`/letters/${currentId}`, payload);
+        toast.success(ta ? '💾 வரைவு வெற்றிகரமாக புதுப்பிக்கப்பட்டது' : '💾 Draft updated');
+      } else {
+        const res = await api.post('/letters', payload);
+        currentId = res.data.letter.id;
+        setLetterId(currentId);
+        toast.success(ta ? '💾 வரைவு பாதுகாப்பாக சேமிக்கப்பட்டது' : '💾 Draft saved securely');
+      }
+      return currentId;
     } catch {
       toast.error(ta ? 'சேமிப்பு தோல்வி' : 'Save failed');
       return null;
