@@ -5,7 +5,8 @@ import { useTranslation } from 'react-i18next';
 import { useAuth } from '../context/AuthContext';
 import {
   LogOut, Menu, X, FileText, LayoutDashboard, User,
-  ClipboardList, Globe, Sparkles, ShieldCheck, MapPin
+  ClipboardList, Globe, Sparkles, ShieldCheck, MapPin,
+  Building2, Award
 } from 'lucide-react';
 import toast from 'react-hot-toast';
 import i18n from '../i18n/index.js';
@@ -24,11 +25,12 @@ const Navbar = () => {
     setLang(next);
     localStorage.setItem('lang', next);
     i18n.changeLanguage(next);
+    toast.success(next === 'ta' ? 'தமிழ் மொழி தேர்ந்தெடுக்கப்பட்டது' : 'English language selected');
   };
 
   const handleLogout = () => {
     logout();
-    toast.success(lang === 'ta' ? 'வெளியேறினீர்கள்!' : 'Logged out!');
+    toast.success(lang === 'ta' ? 'வெற்றிகரமாக வெளியேறியது' : 'Logged out successfully');
     navigate('/');
   };
 
@@ -61,9 +63,24 @@ const Navbar = () => {
     },
   ] : [
     {
+      to: '/#features',
+      icon: <Sparkles size={14} />,
+      label: lang === 'ta' ? 'அம்சங்கள்' : 'Features',
+    },
+    {
+      to: '/#parties',
+      icon: <Building2 size={14} />,
+      label: lang === 'ta' ? 'கட்சிகள்' : 'Parties',
+    },
+    {
       to: '/#pricing',
-      icon: <Sparkles size={15} />,
-      label: lang === 'ta' ? 'திட்டங்கள் & கட்டணம்' : 'Pricing',
+      icon: <Award size={14} />,
+      label: lang === 'ta' ? 'கட்டணம்' : 'Pricing',
+    },
+    {
+      to: '/#security',
+      icon: <ShieldCheck size={14} />,
+      label: lang === 'ta' ? 'பாதுகாப்பு' : 'Security',
     },
   ];
 

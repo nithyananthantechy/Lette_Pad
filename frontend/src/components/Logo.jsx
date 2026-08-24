@@ -12,27 +12,27 @@ const Logo = ({ size = 'md', className = '' }) => {
         <svg width={iconSize} height={iconSize} viewBox="0 0 64 64" fill="none" className="drop-shadow-md">
           <defs>
             <linearGradient id="logoBg" x1="0%" y1="0%" x2="100%" y2="100%">
-              <stop offset="0%" stop-color="#0f172a"/>
-              <stop offset="50%" stop-color="#1e1b4b"/>
-              <stop offset="100%" stop-color="#090d16"/>
+              <stop offset="0%" stopColor="#0f172a"/>
+              <stop offset="50%" stopColor="#1e1b4b"/>
+              <stop offset="100%" stopColor="#090d16"/>
             </linearGradient>
             <linearGradient id="logoGold" x1="0%" y1="0%" x2="100%" y2="100%">
-              <stop offset="0%" stop-color="#fef08a"/>
-              <stop offset="50%" stop-color="#eab308"/>
-              <stop offset="100%" stop-color="#ca8a04"/>
+              <stop offset="0%" stopColor="#fef08a"/>
+              <stop offset="50%" stopColor="#eab308"/>
+              <stop offset="100%" stopColor="#ca8a04"/>
             </linearGradient>
             <linearGradient id="logoCyan" x1="0%" y1="0%" x2="100%" y2="100%">
-              <stop offset="0%" stop-color="#38bdf8"/>
-              <stop offset="100%" stop-color="#2563eb"/>
+              <stop offset="0%" stopColor="#38bdf8"/>
+              <stop offset="100%" stopColor="#2563eb"/>
             </linearGradient>
           </defs>
 
           {/* Shield Base */}
-          <rect x="2" y="2" width="60" height="60" rx="16" fill="url(#logoBg)" stroke="url(#logoGold)" stroke-width="2"/>
+          <rect x="2" y="2" width="60" height="60" rx="16" fill="url(#logoBg)" stroke="url(#logoGold)" strokeWidth="2"/>
           
           {/* Temple Gopuram & Pillar Geometric Line */}
-          <path d="M22 46 L24 24 L32 14 L40 24 L42 46 Z" fill="none" stroke="url(#logoGold)" stroke-width="1.8" stroke-linejoin="round" opacity="0.65"/>
-          <path d="M20 46 L44 46" stroke="url(#logoGold)" stroke-width="2" stroke-linecap="round"/>
+          <path d="M22 46 L24 24 L32 14 L40 24 L42 46 Z" fill="none" stroke="url(#logoGold)" strokeWidth="1.8" strokeLinejoin="round" opacity="0.65"/>
+          <path d="M20 46 L44 46" stroke="url(#logoGold)" strokeWidth="2" strokeLinecap="round"/>
           
           {/* AI Quill / Leadership Star Crest */}
           <path d="M32 12 L35 22 L45 25 L37 32 L39 42 L32 37 L25 42 L27 32 L19 25 L29 22 Z" fill="url(#logoGold)" opacity="0.95"/>
