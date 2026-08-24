@@ -5,10 +5,14 @@ const db      = require('../config/db');
 const { authenticateToken } = require('../middleware/auth');
 const { logAction, getClientIP } = require('../services/auditService');
 
-// Middleware: Require Super Admin Role
+// Middleware: Require Super Admin Role strictly from server-authenticated user
 const requireSuperAdmin = (req, res, next) => {
-  if (req.user?.role !== 'super_admin') {
-    return res.status(403).json({ success: false, message: 'Super Admin access required' });
+  if (!req.user || req.user.role !== 'super_admin') {
+    return res.status(403).json({
+      success: false,
+      error: 'ACCESS_DENIED',
+      message: 'Super Admin access required. Normal users cannot perform administrative actions.',
+    });
   }
   next();
 };
@@ -87,7 +91,7 @@ router.put('/users/:id/role', async (req, res) => {
       resourceType: 'user',
       resourceId: req.params.id,
       ipAddress: getClientIP(req),
-      details: { new_role: role },
+      details: { target_user: req.params.id, new_role: role },
     });
 
     res.json({ success: true, message: 'User role updated successfully', user: result.rows[0] });
@@ -114,9 +118,11 @@ router.put('/users/:id/status', async (req, res) => {
 router.get('/subscriptions', async (req, res) => {
   try {
     const result = await db.query(
-      `SELECT s.*, u.full_name as user_name, u.email as user_email, u.phone as user_phone
+      `SELECT s.*, u.full_name as user_name, u.email as user_email, u.phone as user_phone,
+              admin_user.full_name as approved_by_name
        FROM subscriptions s
        LEFT JOIN users u ON s.user_id = u.id
+       LEFT JOIN users admin_user ON s.approved_by = admin_user.id
        ORDER BY s.created_at DESC`
     );
     res.json({ success: true, subscriptions: result.rows });
@@ -125,50 +131,181 @@ router.get('/subscriptions', async (req, res) => {
   }
 });
 
-// ── 6. PUT /api/admin/subscriptions/:id/approve — 1-Click Approve Payment ─
+// ── 6. PUT /api/admin/subscriptions/:id/approve — Atomic Payment Approval ─
 router.put('/subscriptions/:id/approve', async (req, res) => {
   const { daysToAdd = 30 } = req.body;
+
+  const client = await db.pool.connect();
   try {
-    const subRes = await db.query('SELECT * FROM subscriptions WHERE id = $1', [req.params.id]);
+    await client.query('BEGIN');
+
+    // 1. Fetch and Lock Subscription Record
+    const subRes = await client.query(
+      'SELECT * FROM subscriptions WHERE id = $1 FOR UPDATE',
+      [req.params.id]
+    );
+
     if (!subRes.rows[0]) {
+      await client.query('ROLLBACK');
       return res.status(404).json({ success: false, message: 'Subscription record not found' });
     }
 
     const sub = subRes.rows[0];
-    const newEndsAt = new Date(Date.now() + daysToAdd * 24 * 60 * 60 * 1000);
+    if (sub.status === 'approved' && sub.ends_at && new Date(sub.ends_at) > new Date()) {
+      // Already active, extension mode
+    }
 
-    await db.query(
-      'UPDATE subscriptions SET status = $1, ends_at = $2 WHERE id = $3',
-      ['active', newEndsAt, req.params.id]
+    const starts_at = new Date();
+    const ends_at = new Date(Date.now() + Number(daysToAdd) * 24 * 60 * 60 * 1000);
+
+    // 2. Update Subscription Record to 'approved'
+    await client.query(
+      `UPDATE subscriptions 
+       SET status = 'approved',
+           approved_by = $1,
+           approved_at = NOW(),
+           starts_at = $2,
+           ends_at = $3
+       WHERE id = $4`,
+      [req.user.id, starts_at, ends_at, req.params.id]
     );
 
-    await db.query(
+    // 3. Atomically Activate User Subscription
+    await client.query(
       `UPDATE users
        SET subscription_status = 'active',
            subscription_plan = $1,
            subscription_ends_at = $2,
            updated_at = NOW()
        WHERE id = $3`,
-      [sub.plan_id, newEndsAt, sub.user_id]
+      [sub.plan_id, ends_at, sub.user_id]
     );
 
+    await client.query('COMMIT');
+
+    // 4. Record Audit Trail
     await logAction({
       userId: req.user.id,
-      action: 'ADMIN_APPROVE_PAYMENT',
+      action: 'PAYMENT_APPROVED',
       resourceType: 'subscription',
       resourceId: req.params.id,
       ipAddress: getClientIP(req),
-      details: { user_id: sub.user_id, plan_id: sub.plan_id, days: daysToAdd },
+      details: {
+        approving_admin: req.user.id,
+        user_id: sub.user_id,
+        plan_id: sub.plan_id,
+        amount: sub.amount,
+        upi_ref_no: sub.upi_ref_no,
+        days_granted: daysToAdd,
+        ends_at: ends_at.toISOString(),
+      },
     });
 
-    res.json({ success: true, message: `✅ Payment approved! Subscription extended by ${daysToAdd} days.` });
+    await logAction({
+      userId: sub.user_id,
+      action: 'SUBSCRIPTION_ACTIVATED',
+      resourceType: 'subscription',
+      resourceId: req.params.id,
+      ipAddress: getClientIP(req),
+      details: {
+        plan_id: sub.plan_id,
+        start_date: starts_at.toISOString(),
+        expiry_date: ends_at.toISOString(),
+        approving_admin: req.user.id,
+      },
+    });
+
+    res.json({
+      success: true,
+      message: `✅ Payment approved! Subscription activated and extended by ${daysToAdd} days.`,
+      ends_at,
+    });
   } catch (err) {
-    console.error('Approve payment error:', err);
-    res.status(500).json({ success: false, message: 'Failed to approve payment' });
+    await client.query('ROLLBACK');
+    console.error('Approve payment transaction error:', err);
+    res.status(500).json({ success: false, message: 'Failed to approve payment atomically.' });
+  } finally {
+    client.release();
   }
 });
 
-// ── 7. GET /api/admin/profiles — List all letterhead profiles ─────
+// ── 7. PUT /api/admin/subscriptions/:id/reject — Atomic Payment Rejection ─
+router.put('/subscriptions/:id/reject', async (req, res) => {
+  const { reason } = req.body;
+  if (!reason || !reason.trim()) {
+    return res.status(400).json({
+      success: false,
+      message: 'A rejection reason is required to reject a payment submission.',
+    });
+  }
+
+  const client = await db.pool.connect();
+  try {
+    await client.query('BEGIN');
+
+    const subRes = await client.query(
+      'SELECT * FROM subscriptions WHERE id = $1 FOR UPDATE',
+      [req.params.id]
+    );
+
+    if (!subRes.rows[0]) {
+      await client.query('ROLLBACK');
+      return res.status(404).json({ success: false, message: 'Subscription record not found' });
+    }
+
+    const sub = subRes.rows[0];
+
+    // 1. Mark subscription as 'rejected'
+    await client.query(
+      `UPDATE subscriptions
+       SET status = 'rejected',
+           rejection_reason = $1,
+           rejected_at = NOW(),
+           approved_by = $2
+       WHERE id = $3`,
+      [reason.trim(), req.user.id, req.params.id]
+    );
+
+    // 2. Ensure User subscription status is set to expired if no other active sub
+    await client.query(
+      `UPDATE users
+       SET subscription_status = 'expired',
+           updated_at = NOW()
+       WHERE id = $1 AND subscription_status = 'pending_approval'`,
+      [sub.user_id]
+    );
+
+    await client.query('COMMIT');
+
+    // 3. Record Audit Trail
+    await logAction({
+      userId: req.user.id,
+      action: 'PAYMENT_REJECTED',
+      resourceType: 'subscription',
+      resourceId: req.params.id,
+      ipAddress: getClientIP(req),
+      details: {
+        approving_admin: req.user.id,
+        user_id: sub.user_id,
+        rejection_reason: reason.trim(),
+        upi_ref_no: sub.upi_ref_no,
+      },
+    });
+
+    res.json({
+      success: true,
+      message: '❌ Payment rejected and recorded. Subscription remains inactive.',
+    });
+  } catch (err) {
+    await client.query('ROLLBACK');
+    console.error('Reject payment error:', err);
+    res.status(500).json({ success: false, message: 'Failed to reject payment.' });
+  } finally {
+    client.release();
+  }
+});
+
+// ── 8. GET /api/admin/profiles — List all letterhead profiles ─────
 router.get('/profiles', async (req, res) => {
   try {
     const result = await db.query(

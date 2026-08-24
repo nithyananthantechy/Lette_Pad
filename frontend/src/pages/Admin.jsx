@@ -76,8 +76,25 @@ const Admin = () => {
       const res = await api.put(`/admin/subscriptions/${subId}/approve`, { daysToAdd: days });
       toast.success(res.data?.message || (ta ? '✅ கட்டணம் ஒப்புதல் அளிக்கப்பட்டது!' : 'Payment approved!'));
       loadAll();
-    } catch {
-      toast.error(ta ? 'ஒப்புதல் தோல்வி' : 'Approval failed');
+    } catch (err) {
+      toast.error(err.response?.data?.message || (ta ? 'ஒப்புதல் தோல்வி' : 'Approval failed'));
+    } finally {
+      setActionLoading(false);
+    }
+  };
+
+  // Reject Payment
+  const handleRejectPayment = async (subId) => {
+    const reason = window.prompt(ta ? 'நிராகரிப்பதற்கான காரணத்தை உள்ளிடவும்:' : 'Enter reason for rejection:');
+    if (!reason || !reason.trim()) return;
+
+    setActionLoading(true);
+    try {
+      const res = await api.put(`/admin/subscriptions/${subId}/reject`, { reason: reason.trim() });
+      toast.success(res.data?.message || (ta ? '❌ கட்டணம் நிராகரிக்கப்பட்டது.' : 'Payment rejected.'));
+      loadAll();
+    } catch (err) {
+      toast.error(err.response?.data?.message || (ta ? 'நிராகரிப்பு தோல்வி' : 'Rejection failed'));
     } finally {
       setActionLoading(false);
     }
@@ -252,29 +269,62 @@ const Admin = () => {
                         <td className="p-4 font-mono font-bold text-slate-900 bg-slate-50 rounded-lg">{sub.upi_ref_no}</td>
                         <td className="p-4">
                           <span className={`px-2.5 py-0.5 rounded-full text-[10px] font-bold uppercase
-                            ${sub.status === 'active' ? 'bg-emerald-100 text-emerald-800' : 'bg-amber-100 text-amber-800'}`}>
-                            {sub.status}
+                            ${sub.status === 'approved' || sub.status === 'active'
+                              ? 'bg-emerald-100 text-emerald-800'
+                              : sub.status === 'rejected'
+                                ? 'bg-red-100 text-red-800'
+                                : 'bg-amber-100 text-amber-800'}`}>
+                            {sub.status === 'approved' || sub.status === 'active' ? '✅ Approved' : sub.status === 'rejected' ? '❌ Rejected' : '⏳ Pending'}
                           </span>
+                          {sub.rejection_reason && (
+                            <div className="text-[10px] text-red-600 mt-1 italic">
+                              காரணம்: {sub.rejection_reason}
+                            </div>
+                          )}
                         </td>
                         <td className="p-4 text-[11px] text-slate-500">
                           {new Date(sub.created_at).toLocaleDateString('ta-IN')}
                         </td>
                         <td className="p-4 text-right">
                           <div className="flex items-center justify-end gap-1.5">
-                            <button
-                              onClick={() => handleApprovePayment(sub.id, 30)}
-                              disabled={actionLoading}
-                              className="px-3 py-1.5 bg-emerald-600 hover:bg-emerald-700 text-white font-bold rounded-xl text-xs transition-colors shadow-2xs"
-                            >
-                              +30 நாள் நீட்டிப்பு
-                            </button>
-                            <button
-                              onClick={() => handleApprovePayment(sub.id, 365)}
-                              disabled={actionLoading}
-                              className="px-3 py-1.5 bg-indigo-600 hover:bg-indigo-700 text-white font-bold rounded-xl text-xs transition-colors shadow-2xs"
-                            >
-                              1 ஆண்டு (Year)
-                            </button>
+                            {sub.status === 'pending_approval' ? (
+                              <>
+                                <button
+                                  onClick={() => handleApprovePayment(sub.id, 30)}
+                                  disabled={actionLoading}
+                                  className="px-3 py-1.5 bg-emerald-600 hover:bg-emerald-700 text-white font-bold rounded-xl text-xs transition-colors shadow-2xs"
+                                  title="Approve 30 Days"
+                                >
+                                  +30 நாள் (Approve)
+                                </button>
+                                <button
+                                  onClick={() => handleApprovePayment(sub.id, 365)}
+                                  disabled={actionLoading}
+                                  className="px-3 py-1.5 bg-indigo-600 hover:bg-indigo-700 text-white font-bold rounded-xl text-xs transition-colors shadow-2xs"
+                                  title="Approve 1 Year"
+                                >
+                                  1 ஆண்டு (Year)
+                                </button>
+                                <button
+                                  onClick={() => handleRejectPayment(sub.id)}
+                                  disabled={actionLoading}
+                                  className="px-2.5 py-1.5 bg-red-100 hover:bg-red-200 text-red-700 font-bold rounded-xl text-xs transition-colors"
+                                  title="Reject Payment"
+                                >
+                                  நிராகரி (Reject)
+                                </button>
+                              </>
+                            ) : sub.status === 'approved' || sub.status === 'active' ? (
+                              <button
+                                onClick={() => handleApprovePayment(sub.id, 30)}
+                                disabled={actionLoading}
+                                className="px-2.5 py-1 bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold rounded-xl text-[11px] transition-colors"
+                              >
+                                +30 நாள் நீட்டி
+                              </button>
+                            ) : (
+                              <span className="text-[11px] text-slate-400">முடிவுற்றது</span>
+                            )}
                           </div>
                         </td>
                       </tr>
