@@ -20,9 +20,21 @@ const app = express();
 });
 
 // ── Security Middleware ───────────────────────────────────────
-app.use(helmet());
 app.use(cors({
-  origin: process.env.FRONTEND_URL || 'http://localhost:3000',
+  origin: (origin, callback) => {
+    // Allow requests with no origin (like mobile apps, curl, server-to-server)
+    if (!origin) return callback(null, true);
+    // Allow localhost, custom domains (*.nskgroups.website), and vercel.app domains
+    if (
+      origin.includes('localhost') ||
+      origin.includes('nskgroups.website') ||
+      origin.includes('vercel.app') ||
+      origin === process.env.FRONTEND_URL
+    ) {
+      return callback(null, true);
+    }
+    return callback(null, true); // Permissive for production web service
+  },
   credentials: true,
 }));
 
