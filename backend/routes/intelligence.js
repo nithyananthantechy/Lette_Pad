@@ -3,10 +3,11 @@ const express = require('express');
 const router  = express.Router();
 const { authenticateToken } = require('../middleware/auth');
 const { requireVerified }   = require('../middleware/rbac');
+const { requireActiveSubscription } = require('../middleware/subscription');
 const { fetchAreaIntelligence, generatePoliticalSpeech } = require('../services/intelligenceService');
 const { logAction, getClientIP } = require('../services/auditService');
 
-router.use(authenticateToken, requireVerified);
+router.use(authenticateToken, requireVerified, requireActiveSubscription);
 
 // ── POST /api/intelligence/analyze — Fetch Area News & Intelligence
 router.post('/analyze', async (req, res) => {

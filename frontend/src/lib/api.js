@@ -22,6 +22,14 @@ api.interceptors.response.use(
   async error => {
     const originalRequest = error.config;
 
+    if (error.response?.status === 402) {
+      toast.error(error.response?.data?.message || '🔒 உங்கள் சோதனைக் காலம் முடிவடைந்தது. சந்தாவை புதுப்பிக்கவும்.');
+      if (window.location.pathname !== '/subscription' && window.location.pathname !== '/payment') {
+        window.location.href = '/subscription';
+      }
+      return Promise.reject(error);
+    }
+
     if (error.response?.status === 401 && !originalRequest._retry) {
       originalRequest._retry = true;
       const refreshToken = localStorage.getItem('refreshToken');

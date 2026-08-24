@@ -5,11 +5,12 @@ const crypto  = require('crypto');
 const db      = require('../config/db');
 const { authenticateToken } = require('../middleware/auth');
 const { requireVerified }   = require('../middleware/rbac');
+const { requireActiveSubscription } = require('../middleware/subscription');
 const { logAction, getClientIP } = require('../services/auditService');
 const { generateLetterBody, improveLetterBody, translateLetter, suggestSubjects } = require('../services/aiService');
 const { buildLetterHTML } = require('../services/pdfService');
 
-router.use(authenticateToken, requireVerified);
+router.use(authenticateToken, requireVerified, requireActiveSubscription);
 
 // ── Helper: Generate unique document ID ──────────────────────
 const generateDocumentId = async (partyAbbr = 'TN') => {
